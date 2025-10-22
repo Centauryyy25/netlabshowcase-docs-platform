@@ -5,13 +5,11 @@ import Link from "next/link"
 import Image from "next/image"
 import { useSession } from "@/lib/auth-client"
 import {
-  IconCamera,
+  IconUpload,
   IconChartBar,
   IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
+  IconNetwork,
+  IconBook,
   IconFolder,
   IconHelp,
   IconListDetails,
@@ -19,6 +17,11 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconSchool,
+  IconShield,
+  IconRouter,
+  IconCloud,
+  IconDeviceDesktop,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -39,74 +42,75 @@ const staticData = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
+      title: "Upload Lab",
+      url: "/upload",
+      icon: IconUpload,
     },
     {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
-    },
-    {
-      title: "Projects",
-      url: "#",
+      title: "My Labs",
+      url: "/dashboard?my=true",
       icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
     },
   ],
   navClouds: [
     {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
+      title: "Routing",
+      icon: IconRouter,
+      url: "/dashboard?category=Routing",
       items: [
         {
-          title: "Active Proposals",
-          url: "#",
+          title: "OSPF Labs",
+          url: "/dashboard?category=Routing&search=OSPF",
         },
         {
-          title: "Archived",
-          url: "#",
+          title: "EIGRP Labs",
+          url: "/dashboard?category=Routing&search=EIGRP",
+        },
+        {
+          title: "BGP Labs",
+          url: "/dashboard?category=Routing&search=BGP",
         },
       ],
     },
     {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
+      title: "Switching",
+      icon: IconNetwork,
+      url: "/dashboard?category=Switching",
       items: [
         {
-          title: "Active Proposals",
-          url: "#",
+          title: "VLAN Labs",
+          url: "/dashboard?category=Switching&search=VLAN",
         },
         {
-          title: "Archived",
-          url: "#",
+          title: "STP Labs",
+          url: "/dashboard?category=Switching&search=STP",
+        },
+        {
+          title: "EtherChannel",
+          url: "/dashboard?category=Switching&search=EtherChannel",
         },
       ],
     },
     {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
+      title: "Security",
+      icon: IconShield,
+      url: "/dashboard?category=Security",
       items: [
         {
-          title: "Active Proposals",
-          url: "#",
+          title: "ACL Labs",
+          url: "/dashboard?category=Security&search=ACL",
         },
         {
-          title: "Archived",
-          url: "#",
+          title: "VPN Labs",
+          url: "/dashboard?category=Security&search=VPN",
+        },
+        {
+          title: "Firewall Labs",
+          url: "/dashboard?category=Security&search=Firewall",
         },
       ],
     },
@@ -130,19 +134,19 @@ const staticData = {
   ],
   documents: [
     {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
+      name: "MPLS Labs",
+      url: "/dashboard?category=MPLS",
+      icon: IconCloud,
     },
     {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
+      name: "Wireless Labs",
+      url: "/dashboard?category=Wireless",
+      icon: IconDeviceDesktop,
     },
     {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
+      name: "All Categories",
+      url: "/dashboard",
+      icon: IconBook,
     },
   ],
 }
@@ -171,7 +175,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <Link href="/">
                 <Image src="/codeguide-logo.png" alt="CodeGuide" width={32} height={32} className="rounded-lg" />
-                <span className="text-base font-semibold font-parkinsans">CodeGuide</span>
+                <span className="text-base font-semibold font-parkinsans">NetLabShowcase</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

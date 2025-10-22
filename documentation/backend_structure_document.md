@@ -1,179 +1,194 @@
-# Backend Structure Document
+# Backend Structure Document for NetLabShowcase
 
-This document outlines the backend architecture, hosting, and infrastructure for the **codeguide-starter** project. It uses plain language so anyone can understand how the backend is set up and how it supports the application.
+## Backend Architecture
 
-## 1. Backend Architecture
+Our backend is built on a modern, full-stack TypeScript foundation using Next.js. It follows a modular, separation-of-concerns design to ensure clear boundaries between routing, business logic, and data access.
 
-- **Framework and Design Pattern**
-  - We use **Next.js API Routes** to handle all server-side logic. These routes live alongside the frontend code in the same repository, making development and deployment simpler.
-  - The backend follows a **layered pattern**:
-    1. **API Layer**: Receives requests (login, registration, data fetch).  
-    2. **Service Layer**: Contains the core business logic (user validation, password hashing).  
-    3. **Data Access Layer**: Talks to the database via a simple ORM (e.g., Prisma or TypeORM).
+• Framework & Patterns:
+  - Next.js API Routes and Server Actions for server-side logic (file uploads, AI calls, database operations)
+  - Layered design: routing layer → service layer → data access layer
+  - Type-safe database interactions using Drizzle ORM
 
-- **Scalability**
-  - Stateless API routes can scale horizontally—new instances can spin up on demand.  
-  - We can add caching or a message queue (e.g., Redis or RabbitMQ) without changing the core code.
+• Scalability & Performance:
+  - Serverless deployment on Vercel’s edge network handles auto-scaling under load
+  - Caching with Next.js ISR (Incremental Static Regeneration) and built-in CDN support
+  - Horizontal scaling of stateless API functions—each request spins up an isolated instance
 
-- **Maintainability**
-  - Code for each feature is grouped by route (authentication, dashboard).  
-  - A service layer separates complex logic from request handling.
+• Maintainability:
+  - Clear directory structure (`/app`, `/components`, `/lib`, `/db`)
+  - TypeScript across all layers to catch errors at compile time
+  - Modular service files (e.g., `auth.ts`, `upload-handler.ts`, `ai.ts`) for focused responsibilities
 
-- **Performance**
-  - Lightweight Node.js handlers keep response times low.  
-  - Future use of database connection pooling and Redis for caching repeated queries.
+## Database Management
 
-## 2. Database Management
+We use PostgreSQL, a reliable SQL database, accessed via Drizzle ORM for type-safe queries and migrations.
 
-- **Database Choice**
-  - We recommend **PostgreSQL** for structured data and reliable transactions.  
-  - In-memory caching can be added later with **Redis** for session tokens or frequently read data.
+• Database Type:
+  - SQL (PostgreSQL)
 
-- **Data Storage and Access**
-  - Use an ORM like **Prisma** or **TypeORM** to map JavaScript/TypeScript objects to database tables.
-  - Connection pooling ensures efficient use of database connections under load.
-  - Migrations track schema changes over time, keeping development, staging, and production in sync.
+• ORM & Tooling:
+  - Drizzle ORM for schema definitions, migrations, and type-safe queries
+  - Docker Compose for local development (Next.js + PostgreSQL)
+  - Automated migration scripts to evolve schema safely
 
-- **Data Practices**
-  - Passwords are never stored in plain text—they are salted and hashed with **bcrypt** before saving.
-  - All outgoing data is typed and validated to prevent malformed records.
+• Data Practices:
+  - Referential integrity enforced via foreign keys
+  - Environment-controlled credentials and connection pooling
+  - Optional data seeding scripts for test/dev environments
 
-## 3. Database Schema
+## Database Schema
 
-### Human-Readable Format
+Below is a human-readable overview, followed by SQL definitions.
 
-- **Users**
-  - **id**: Unique identifier  
-  - **email**: User’s email address (unique)  
-  - **password_hash**: Securely hashed password  
-  - **created_at**: Account creation timestamp
+Entities & Relationships:
+• Users: platform accounts (id, name, email, password hash)
+• Categories: lab categories (id, name)
+• Labs: lab entries linked to users and categories (title, description, difficulty, timestamps)
+• Files: file records linked to labs (file path, upload time)
 
-- **Sessions**
-  - **id**: Unique session record  
-  - **user_id**: Links to a user  
-  - **token**: Random string for authentication  
-  - **expires_at**: When the token stops working  
-  - **created_at**: When the session was created
+SQL Schema (PostgreSQL):
 
-- **DashboardItems** *(optional for dynamic data)*
-  - **id**: Unique record  
-  - **title**: Item title  
-  - **content**: Item details  
-  - **created_at**: When the item was added
-
-### SQL Schema (PostgreSQL)
 ```sql
 -- Users table
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Sessions table
-CREATE TABLE sessions (
+-- Categories table
+CREATE TABLE categories (
   id SERIAL PRIMARY KEY,
-  user_id INT REFERENCES users(id) ON DELETE CASCADE,
-  token VARCHAR(255) UNIQUE NOT NULL,
-  expires_at TIMESTAMPTZ NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
+  name TEXT UNIQUE NOT NULL
 );
 
--- Dashboard items table
-CREATE TABLE dashboard_items (
+-- Labs table
+CREATE TABLE labs (
   id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
-  content TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
+  description TEXT,
+  difficulty TEXT CHECK (difficulty IN ('easy','medium','hard')) DEFAULT 'easy',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-```  
 
-## 4. API Design and Endpoints
+-- Files table
+CREATE TABLE files (
+  id SERIAL PRIMARY KEY,
+  lab_id INTEGER NOT NULL REFERENCES labs(id) ON DELETE CASCADE,
+  file_path TEXT NOT NULL,
+  uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
 
-- **Approach**: We follow a **RESTful** style, grouping related endpoints under `/api` directories.
+## API Design and Endpoints
 
-- **Key Endpoints**
-  - `POST /api/auth/register`  
-    • Accepts `{ email, password }`  
-    • Creates a new user and issues a session token  
-  - `POST /api/auth/login`  
-    • Accepts `{ email, password }`  
-    • Verifies credentials and returns a session token  
-  - `POST /api/auth/logout`  
-    • Invalidates the session token on the server  
-  - `GET /api/dashboard/data`  
-    • Requires a valid session  
-    • Returns user-specific data or dashboard items  
+We use RESTful patterns via Next.js API routes and Server Actions.
 
-- **Communication**
-  - Frontend sends JSON requests; backend replies with JSON and appropriate HTTP status codes.  
-  - Protected routes check for a valid session token (in cookies or Authorization header).
+Key Endpoints:
 
-## 5. Hosting Solutions
+• Authentication (Better Auth)
+  - POST `/api/auth/signup`: register new user
+  - POST `/api/auth/signin`: authenticate and receive session cookie
+  - POST `/api/auth/signout`: end session
 
-- **Cloud Provider**:  
-  - **Vercel** (recommended) offers seamless Next.js deployments, auto-scaling, and built-in CDN.  
-  - Alternatively, **Netlify** or any Node.js-capable host will work.
+• Labs & Categories
+  - GET `/api/labs`: list all published labs (with optional filters by category or difficulty)
+  - GET `/api/labs/[id]`: fetch details of a single lab
+  - POST `/api/labs`: create a new lab record (protected)
+  - PATCH `/api/labs/[id]`: update lab (owner only)
+  - DELETE `/api/labs/[id]`: delete lab (owner only)
+  - GET `/api/categories`: list all categories
 
-- **Benefits**
-  - **Reliability**: Global servers and failover across regions.  
-  - **Scalability**: Auto-scale serverless functions based on traffic.  
-  - **Cost-Effectiveness**: Pay-per-use model means low cost for small projects.
+• File Uploads
+  - POST `/api/upload`: handle multipart file upload, store in cloud, return file metadata
 
-## 6. Infrastructure Components
+• AI Assistant
+  - POST `/api/ai/chat`: send user prompt to Vercel AI SDK and stream responses
+  - POST `/api/ai/summarize`: generate a summary of a lab configuration via background job
 
-- **Load Balancer**
-  - Provided by the hosting platform—distributes API requests across function instances.
+These endpoints use middleware to check authentication, validate inputs, and enforce ownership rules.
 
-- **CDN (Content Delivery Network)**
-  - Vercel’s global edge network caches static assets (CSS, JS, images) for faster page loads.
+## Hosting Solutions
 
-- **Caching**
-  - **Redis** (optional) for session storage or caching dashboard queries to reduce database load.
+• Local Development:
+  - Docker Compose orchestrates Next.js app and PostgreSQL database
 
-- **Object Storage**
-  - For file uploads or backups, integrate with AWS S3 or similar services.
+• Production Deployment:
+  - Vercel (serverless functions) for APIs and frontend
+  - Vercel’s Global CDN for static assets
+  - Optional object storage: Vercel Blob or AWS S3 for uploaded files
 
-- **Message Queue**
-  - In future, use **RabbitMQ** or **Kafka** for background tasks (e.g., email notifications).
+Benefits:
+  - Automatic scaling based on traffic
+  - Minimal ops overhead—no manual server management
+  - Built-in TLS, zero-config CDN, and analytics
+  - Cost-effective pay-as-you-go model
 
-## 7. Security Measures
+## Infrastructure Components
 
-- **Authentication & Authorization**
-  - Passwords hashed with **bcrypt** and salted.  
-  - Session tokens stored in secure, HttpOnly cookies or Authorization headers.  
-  - Protected endpoints verify tokens before proceeding.
+• Load Balancing & CDN:
+  - Vercel’s edge network performs global load balancing
+  - Automatic static asset caching at CDN edge
 
-- **Data Encryption**
-  - **HTTPS/TLS** encrypts data in transit.  
-  - Database connections use SSL to encrypt data between the app and the database.
+• Caching & Performance:
+  - ISR (Incremental Static Regeneration) for frequently accessed pages
+  - HTTP cache headers configured on serverless responses
 
-- **Input Validation**
-  - Every incoming request is validated (e.g., valid email format, password length) to prevent SQL injection or other attacks.
+• Storage:
+  - PostgreSQL managed by cloud provider (connections via pool)
+  - Cloud object storage for large file assets
 
-- **Web Security Best Practices**
-  - Enable **CORS** policies to limit allowed origins.  
-  - Use **CSRF tokens** or same-site cookies to prevent cross-site requests.  
-  - Set secure headers with **Helmet** or a similar middleware.
+• Background Jobs:
+  - Simple job queue using serverless functions (for AI summary generation)
 
-## 8. Monitoring and Maintenance
+## Security Measures
 
-- **Performance Monitoring**
-  - Integrate **Sentry** or **LogRocket** for real-time crash reporting and performance tracing.  
-  - Use Vercel’s built-in analytics to track request latencies and error rates.
+• Authentication & Authorization:
+  - Better Auth to manage user sessions, password hashing, secure cookies
+  - Route guards and ownership checks on resource-modifying endpoints
 
-- **Logging**
-  - Structured logs (JSON) for all API requests and errors, shipped to a log management service like **Datadog** or **Logflare**.
+• Data Encryption:
+  - TLS for all in-transit traffic
+  - Encryption at rest for database and object storage (provider-managed)
 
-- **Health Checks**
-  - Define a `/health` endpoint that returns a 200 status if the service is up and the database is reachable.
+• Input Validation & Sanitization:
+  - Zod or built-in checks for expected fields
+  - File type and size validation on uploads
 
-- **Maintenance Strategies**
-  - Automated migrations run on deploy to keep the database schema up to date.  
-  - Scheduled dependency audits and security scans (e.g., `npm audit`).
-  - Regular backups of the database (daily or weekly depending on usage).
+• Compliance & Best Practices:
+  - Secure HTTP headers (HSTS, Content Security Policy)
+  - Least-privilege database roles
+  - Regular dependency updates and vulnerability scans
 
-## 9. Conclusion and Overall Backend Summary
+## Monitoring and Maintenance
 
-The backend for **codeguide-starter** is built on Next.js API Routes and Node.js, paired with PostgreSQL for data and optional Redis for caching. It follows a clear layered architecture that keeps code easy to maintain and extend. With RESTful endpoints for authentication and data, secure practices like password hashing and HTTPS, and hosting on Vercel for scalability and global performance, this setup meets the project’s goals for a fast, secure, and developer-friendly foundation. Future enhancements—such as background job queues, advanced monitoring, or richer data models—can be added without disrupting the core structure.
+• Logging & Metrics:
+  - Vercel function logs aggregated in their dashboard
+  - PostgreSQL performance metrics via provider console
+  - Optional integration with Sentry or Datadog for error tracking
+
+• Alerts:
+  - Automated alerts on function errors or database connection issues
+
+• Maintenance:
+  - Scheduled backups of PostgreSQL
+  - Automated schema migrations via CI/CD pipelines
+  - Dependency updates and security patching via GitHub Actions
+
+## Conclusion and Overall Backend Summary
+
+Our backend uses a clean, modular Next.js and TypeScript architecture, backed by PostgreSQL and Drizzle ORM, to handle user authentication, lab management, file uploads, and AI interactions. Deployed serverlessly on Vercel with Docker Compose for local development, the system is both scalable and maintainable.
+
+Key strengths:
+• Type-safe, modular code organization 
+• Secure authentication and fine-grained access control
+• Production-ready deployment with global CDN and automatic scaling
+• Clear API surface for labs, uploads, and AI features
+
+This structure meets NetLabShowcase’s goals of reliability, performance, and ease of future expansion (forums, analytics, enhanced AI features). It provides a solid foundation for building a professional, responsive documentation hub for networking students and engineers.
