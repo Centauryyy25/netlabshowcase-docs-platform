@@ -5,10 +5,61 @@ import { db } from '@/db';
 import { labs, labFiles, user } from '@/db';
 import { eq, and } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
-import DOMPurify from 'isomorphic-dompurify';
+import sanitizeHtml, { IOptions } from 'sanitize-html';
 import { defineRoute } from '@/types/route';
 
 type LabRouteParams = { id: string };
+
+const LAB_NOTES_SANITIZE_OPTIONS: IOptions = {
+  allowedTags: [
+    'a',
+    'abbr',
+    'b',
+    'blockquote',
+    'br',
+    'caption',
+    'code',
+    'div',
+    'em',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'hr',
+    'i',
+    'img',
+    'li',
+    'ol',
+    'p',
+    'pre',
+    's',
+    'section',
+    'span',
+    'strong',
+    'sub',
+    'sup',
+    'table',
+    'tbody',
+    'td',
+    'th',
+    'thead',
+    'tr',
+    'u',
+    'ul',
+  ],
+  allowedAttributes: {
+    a: ['href', 'name', 'target', 'rel'],
+    img: ['src', 'alt', 'title', 'width', 'height'],
+    '*': ['class', 'id', 'data-*'],
+  },
+  allowedSchemes: ['http', 'https', 'mailto', 'tel', 'data'],
+  allowedSchemesByTag: {
+    img: ['http', 'https', 'data'],
+  },
+  allowProtocolRelative: true,
+};
 
 export const GET = defineRoute<LabRouteParams>(async (request: NextRequest, { params }) => {
   try {
@@ -137,7 +188,7 @@ export const PATCH = defineRoute<LabRouteParams>(async (request: NextRequest, { 
     const { id } = params;
     const body = await request.json().catch(() => ({}));
     const rawNotes = typeof body.labNotes === 'string' ? body.labNotes : '';
-    const sanitizedNotes = DOMPurify.sanitize(rawNotes);
+    const sanitizedNotes = sanitizeHtml(rawNotes, LAB_NOTES_SANITIZE_OPTIONS);
 
     const [existingLab] = await db
       .select({ userId: labs.userId })
