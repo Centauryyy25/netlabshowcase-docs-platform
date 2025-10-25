@@ -34,6 +34,7 @@ function SelectTrigger({
 }) {
   return (
     <SelectPrimitive.Trigger
+      suppressHydrationWarning
       data-slot="select-trigger"
       data-size={size}
       className={cn(
@@ -98,11 +99,15 @@ function SelectLabel({
   )
 }
 
+type SelectItemProps = React.ComponentProps<typeof SelectPrimitive.Item> & {
+  value: string;
+};
+
 function SelectItem({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+}: SelectItemProps) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
@@ -183,3 +188,4 @@ export {
   SelectTrigger,
   SelectValue,
 }
+

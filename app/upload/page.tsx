@@ -1,21 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useRouter } from 'next/navigation';
+import { useSession } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import RichTextEditor from '@/components/editor/RichTextEditor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Upload, FileText, Image, Package, ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { Upload, FileText, Package, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import Link from 'next/link';
+import UploadTopologyImage from '@/components/labs/UploadTopologyImage';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_FILE_TYPES = [
@@ -31,34 +33,50 @@ const ALLOWED_FILE_TYPES = [
   'text/x-config',
 ];
 
+const CATEGORY_OPTIONS = ['Routing', 'Switching', 'Security', 'MPLS', 'Wireless', 'Voice', 'Data Center', 'Other'] as const
+const DIFFICULTY_OPTIONS = ['Beginner', 'Intermediate', 'Advanced'] as const
+const STATUS_OPTIONS = ['draft', 'published'] as const
+
 const labFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
   description: z.string().min(1, 'Description is required').max(2000, 'Description too long'),
-  category: z.enum(['Routing', 'Switching', 'Security', 'MPLS', 'Wireless', 'Voice', 'Data Center', 'Other'], {
-    required_error: 'Please select a category',
-  }),
-  difficulty: z.enum(['Beginner', 'Intermediate', 'Advanced'], {
-    required_error: 'Please select a difficulty level',
-  }),
-  status: z.enum(['draft', 'published']).default('draft'),
+  labNotes: z.string().optional(),
+  category: z.enum(CATEGORY_OPTIONS),
+  difficulty: z.enum(DIFFICULTY_OPTIONS),
+  status: z.enum(STATUS_OPTIONS),
   tags: z.string().optional(),
   topologyImage: z.instanceof(File).optional(),
   additionalFiles: z.array(z.instanceof(File)).optional(),
 });
 
+type LabStatus = (typeof STATUS_OPTIONS)[number]
+
 type LabFormData = z.infer<typeof labFormSchema>;
 
+type CreateLabApiResponse =
+  | { success: true; data: { id: string; title: string; status: LabStatus } }
+  | { success: false; error?: string };
+
 export default function UploadPage() {
-  const router = useRouter();
+  const { data: session, isPending } = useSession();
   const [currentStep, setCurrentStep] = useState(1);
-  const [uploadedLab, setUploadedLab] = useState<any>(null);
+  const [uploadedLab, setUploadedLab] = useState<{
+    id: string;
+    title: string;
+    status: 'draft' | 'published';
+  } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedTopologyUrl, setUploadedTopologyUrl] = useState<string | null>(null);
 
   const form = useForm<LabFormData>({
     resolver: zodResolver(labFormSchema),
     defaultValues: {
+      title: '',
+      description: '',
+      labNotes: '',
       status: 'draft',
+      tags: '',
     },
   });
 
@@ -69,12 +87,12 @@ export default function UploadPage() {
     if (fieldName === 'topologyImage') {
       const imageFile = files.find(file => file.type.startsWith('image/'));
       if (imageFile) {
-        form.setValue(fieldName, imageFile);
+        form.setValue('topologyImage', imageFile);
       } else {
         toast.error('Please drop an image file for topology');
       }
     } else {
-      form.setValue(fieldName, files);
+      form.setValue('additionalFiles', files);
     }
   };
 
@@ -90,52 +108,59 @@ export default function UploadPage() {
     return true;
   };
 
-  const onSubmit = async (data: LabFormData) => {
+  const onSubmit: SubmitHandler<LabFormData> = async (data) => {
     setIsSubmitting(true);
     setUploadProgress(0);
 
     try {
-      // Step 1: Create the lab
+      if (!session?.user) {
+        toast.error('You must be signed in to upload a lab.');
+        setIsSubmitting(false);
+        return;
+      }
+      // Step 1: Create the lab (include uploaded topology image URL if present)
       setUploadProgress(20);
-      const labResponse = await fetch('/api/labs', {
+      const labResponse = await fetch('/api/labs/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           title: data.title,
           description: data.description,
+          labNotes: data.labNotes ? data.labNotes : null,
           category: data.category,
           difficulty: data.difficulty,
           status: data.status,
           tags: data.tags ? data.tags.split(',').map(tag => tag.trim()) : [],
+          user_id: session.user.id,
+          topology_image_url: uploadedTopologyUrl,
         }),
       });
 
       if (!labResponse.ok) {
-        throw new Error('Failed to create lab');
+        let serverMsg = 'Failed to create lab';
+        try {
+          const err = await labResponse.json();
+          if (err?.error) serverMsg = err.error;
+        } catch {}
+        throw new Error(serverMsg);
       }
 
-      const labData = await labResponse.json();
-      const labId = labData.lab.id;
+      const labData = (await labResponse.json()) as CreateLabApiResponse;
+      if (!labData.success) {
+        throw new Error(labData.error ?? 'Failed to create lab');
+      }
+
+      const labId = labData.data.id;
+      if (!labId) {
+        throw new Error('Lab identifier missing from create response');
+      }
       setUploadProgress(40);
 
-      // Step 2: Upload topology image if provided
-      if (data.topologyImage && validateFile(data.topologyImage)) {
-        const formData = new FormData();
-        formData.append('file', data.topologyImage);
-        formData.append('labId', labId);
-        formData.append('description', 'Topology diagram image');
-
-        const imageResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (imageResponse.ok) {
-          setUploadProgress(60);
-        }
-      }
+      // Step 2: (Handled via Supabase direct upload component). Progress bump for UX.
+      setUploadProgress(60);
 
       // Step 3: Upload additional files if provided
       if (data.additionalFiles && data.additionalFiles.length > 0) {
@@ -150,18 +175,20 @@ export default function UploadPage() {
 
           await fetch('/api/upload', {
             method: 'POST',
+            credentials: 'include',
             body: formData,
           });
         }
       }
 
       setUploadProgress(100);
-      setUploadedLab(labData.lab);
+      setUploadedLab(labData.data);
       setCurrentStep(4); // Success step
       toast.success('Lab uploaded successfully!');
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload lab. Please try again.');
+      const message = error instanceof Error ? error.message : 'Failed to upload lab. Please try again.';
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -180,16 +207,16 @@ export default function UploadPage() {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  const getFieldsForStep = (step: number) => {
+  const getFieldsForStep = (step: number): Array<keyof LabFormData> => {
     switch (step) {
       case 1:
-        return ['title', 'description'];
+        return ['title', 'description'] as Array<keyof LabFormData>
       case 2:
-        return ['category', 'difficulty'];
+        return ['category', 'difficulty'] as Array<keyof LabFormData>
       case 3:
-        return [];
+        return [] as Array<keyof LabFormData>
       default:
-        return [];
+        return [] as Array<keyof LabFormData>
     }
   };
 
@@ -203,59 +230,100 @@ export default function UploadPage() {
               <p className="text-muted-foreground">Tell us about your networking lab</p>
             </div>
 
-            <FormField
+            <FormField<LabFormData>
               control={form.control}
               name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lab Title *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., OSPF Area Configuration Lab" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Give your lab a clear, descriptive title
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const { value, onChange, ...rest } = field;
+                return (
+                  <FormItem>
+                    <FormLabel>Lab Title *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...rest}
+                        placeholder="e.g., OSPF Area Configuration Lab"
+                        value={typeof value === 'string' ? value : ''}
+                        onChange={(event) => onChange(event.target.value)}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Give your lab a clear, descriptive title
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
-            <FormField
+            <FormField<LabFormData>
               control={form.control}
               name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description *</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe what students will learn and accomplish in this lab..."
-                      className="min-h-32"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Provide a detailed description of the lab objectives and requirements
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const { value, onChange, ...rest } = field;
+                return (
+                  <FormItem>
+                    <FormLabel>Description *</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...rest}
+                        placeholder="Describe what students will learn and accomplish in this lab..."
+                        className="min-h-32"
+                        value={typeof value === 'string' ? value : ''}
+                        onChange={(event) => onChange(event.target.value)}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Provide a detailed description of the lab objectives and requirements
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
-            <FormField
+            <FormField<LabFormData>
+              control={form.control}
+              name="labNotes"
+              render={({ field }) => {
+                const content = typeof field.value === 'string' ? field.value : '';
+                return (
+                  <FormItem>
+                    <FormLabel>Detailed Notes</FormLabel>
+                    <FormControl>
+                      <RichTextEditor value={content} onChange={field.onChange} />
+                    </FormControl>
+                    <FormDescription>
+                      Tambahkan teori, konfigurasi, atau dokumentasi lengkap lab di sini.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+
+            <FormField<LabFormData>
               control={form.control}
               name="tags"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tags</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., OSPF, Routing, IPv6 (comma-separated)" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Add tags to help others find your lab (comma-separated)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const { value, onChange, ...rest } = field;
+                return (
+                  <FormItem>
+                    <FormLabel>Tags</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...rest}
+                        placeholder="e.g., OSPF, Routing, IPv6 (comma-separated)"
+                        value={typeof value === 'string' ? value : ''}
+                        onChange={(event) => onChange(event.target.value)}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Add tags to help others find your lab (comma-separated)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
           </div>
         );
@@ -268,49 +336,54 @@ export default function UploadPage() {
               <p className="text-muted-foreground">Help categorize your lab for better discovery</p>
             </div>
 
-            <FormField
+            <FormField<LabFormData>
               control={form.control}
               name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Routing">Routing</SelectItem>
-                      <SelectItem value="Switching">Switching</SelectItem>
-                      <SelectItem value="Security">Security</SelectItem>
-                      <SelectItem value="MPLS">MPLS</SelectItem>
-                      <SelectItem value="Wireless">Wireless</SelectItem>
-                      <SelectItem value="Voice">Voice</SelectItem>
-                      <SelectItem value="Data Center">Data Center</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const value = typeof field.value === 'string' ? field.value : '';
+                return (
+                  <FormItem>
+                    <FormLabel>Category *</FormLabel>
+                    <Select onValueChange={field.onChange} value={value || undefined}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Routing">Routing</SelectItem>
+                        <SelectItem value="Switching">Switching</SelectItem>
+                        <SelectItem value="Security">Security</SelectItem>
+                        <SelectItem value="MPLS">MPLS</SelectItem>
+                        <SelectItem value="Wireless">Wireless</SelectItem>
+                        <SelectItem value="Voice">Voice</SelectItem>
+                        <SelectItem value="Data Center">Data Center</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
-            <FormField
+            <FormField<LabFormData>
               control={form.control}
               name="difficulty"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Difficulty Level *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select difficulty" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Beginner">
-                        <div className="flex items-center gap-2">
+              render={({ field }) => {
+                const value = typeof field.value === 'string' ? field.value : '';
+                return (
+                  <FormItem>
+                    <FormLabel>Difficulty Level *</FormLabel>
+                    <Select onValueChange={field.onChange} value={value || undefined}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select difficulty" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Beginner">
+                          <div className="flex items-center gap-2">
                           <Badge variant="secondary">Beginner</Badge>
                           <span className="text-sm">Basic concepts, 1-2 hours</span>
                         </div>
@@ -321,49 +394,53 @@ export default function UploadPage() {
                           <span className="text-sm">Some experience required, 2-4 hours</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="Advanced">
+                        <SelectItem value="Advanced">
                         <div className="flex items-center gap-2">
                           <Badge variant="destructive">Advanced</Badge>
                           <span className="text-sm">Expert knowledge, 4+ hours</span>
                         </div>
                       </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
-            <FormField
+            <FormField<LabFormData>
               control={form.control}
               name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Publishing Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="draft">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4" />
-                          <span>Draft - Save but don't publish</span>
-                        </div>
-                      </SelectItem>
+              render={({ field }) => {
+                const value = typeof field.value === 'string' ? field.value : '';
+                return (
+                  <FormItem>
+                    <FormLabel>Publishing Status</FormLabel>
+                    <Select onValueChange={field.onChange} value={value || undefined}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="draft">
+                         <div className="flex items-center gap-2">
+                           <FileText className="h-4 w-4" />
+                           <span>Draft - Save but do not publish</span>
+                         </div>
+                       </SelectItem>
                       <SelectItem value="published">
                         <div className="flex items-center gap-2">
                           <Package className="h-4 w-4" />
                           <span>Published - Make publicly available</span>
                         </div>
                       </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
           </div>
         );
@@ -376,50 +453,18 @@ export default function UploadPage() {
               <p className="text-muted-foreground">Upload topology diagrams and configuration files</p>
             </div>
 
-            {/* Topology Image Upload */}
+            {/* Topology Image Upload (Supabase Storage) */}
             <div className="space-y-3">
               <label className="text-sm font-medium">Topology Image (Optional)</label>
-              <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => handleFileDrop(e, 'topologyImage')}
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) form.setValue('topologyImage', file);
-                  }}
-                />
-                {form.watch('topologyImage') ? (
-                  <div className="space-y-2">
-                    <Image className="h-8 w-8 mx-auto text-green-600" />
-                    <p className="text-sm text-green-600">
-                      {form.watch('topologyImage')?.name}
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => form.setValue('topologyImage', undefined)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Upload className="h-8 w-8 mx-auto text-gray-400" />
-                    <p className="text-sm text-gray-600">
-                      Drag and drop an image here, or click to select
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      PNG, JPG, GIF up to 10MB
-                    </p>
-                  </div>
-                )}
-              </div>
+              <UploadTopologyImage
+                className=""
+                onUploaded={(publicUrl) => {
+                  setUploadedTopologyUrl(publicUrl ?? null);
+                }}
+              />
+              {uploadedTopologyUrl && (
+                <p className="text-xs text-green-600 break-all">Uploaded URL: {uploadedTopologyUrl}</p>
+              )}
             </div>
 
             {/* Additional Files Upload */}
@@ -487,7 +532,7 @@ export default function UploadPage() {
             <div>
               <h2 className="text-2xl font-bold mb-2">Lab Uploaded Successfully!</h2>
               <p className="text-muted-foreground">
-                Your networking lab "{uploadedLab?.title}" has been {uploadedLab?.status === 'published' ? 'published' : 'saved as draft'}.
+                Your networking lab {uploadedLab ? `${uploadedLab.title}` : 'your submission'} has been {uploadedLab?.status === 'published' ? 'published' : 'saved as draft'}.
               </p>
             </div>
             <div className="flex gap-4 justify-center">
@@ -514,6 +559,45 @@ export default function UploadPage() {
         <Card className="max-w-md mx-auto">
           <CardContent className="pt-6">
             {renderStepContent()}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isPending) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card className="max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle>Loading...</CardTitle>
+            <CardDescription>Checking your session</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Progress value={30} className="w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!session?.user) {
+    return (
+      <div className="container mx-auto py-16">
+        <Card className="max-w-xl mx-auto">
+          <CardHeader>
+            <CardTitle>Sign in required</CardTitle>
+            <CardDescription>You need to be signed in to upload a lab.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-3">
+              <Button asChild>
+                <Link href="/sign-in">Sign In</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/sign-up">Create Account</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -600,3 +684,8 @@ export default function UploadPage() {
     </div>
   );
 }
+
+
+
+
+

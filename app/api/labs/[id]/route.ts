@@ -3,11 +3,12 @@ import { db } from '@/db';
 import { labs, labFiles, user } from '@/db';
 import { eq, and } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
+import DOMPurify from 'isomorphic-dompurify';
+import { defineRoute } from '@/types/route';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+type LabRouteParams = { id: string };
+
+export const GET = defineRoute<LabRouteParams>(async (request: NextRequest, { params }) => {
   try {
     const { id } = params;
 
@@ -24,6 +25,7 @@ export async function GET(
         id: labs.id,
         title: labs.title,
         description: labs.description,
+        labNotes: labs.labNotes,
         category: labs.category,
         difficulty: labs.difficulty,
         status: labs.status,
@@ -66,12 +68,9 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export const PUT = defineRoute<LabRouteParams>(async (request: NextRequest, { params }) => {
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
@@ -118,12 +117,68 @@ export async function PUT(
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export const PATCH = defineRoute<LabRouteParams>(async (request: NextRequest, { params }) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { id } = params;
+    const body = await request.json().catch(() => ({}));
+    const rawNotes = typeof body.labNotes === 'string' ? body.labNotes : '';
+    const sanitizedNotes = DOMPurify.sanitize(rawNotes);
+
+    const [existingLab] = await db
+      .select({ userId: labs.userId })
+      .from(labs)
+      .where(eq(labs.id, id));
+
+    if (!existingLab) {
+      return NextResponse.json(
+        { error: 'Lab not found' },
+        { status: 404 }
+      );
+    }
+
+    if (existingLab.userId !== session.user.id) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
+      );
+    }
+
+    const [updatedLab] = await db
+      .update(labs)
+      .set({
+        labNotes: sanitizedNotes,
+        updatedAt: new Date(),
+      })
+      .where(eq(labs.id, id))
+      .returning({
+        labNotes: labs.labNotes,
+        updatedAt: labs.updatedAt,
+      });
+
+    return NextResponse.json({ lab: updatedLab });
+  } catch (error) {
+    console.error('Error updating lab notes:', error);
+    return NextResponse.json(
+      { error: 'Failed to update lab notes' },
+      { status: 500 }
+    );
+  }
+});
+
+export const DELETE = defineRoute<LabRouteParams>(async (request: NextRequest, { params }) => {
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
@@ -162,4 +217,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+});

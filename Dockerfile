@@ -1,5 +1,6 @@
 # Use the official Node.js 18 image
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
+
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -11,6 +12,9 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 
+RUN apk add --no-cache python3 make g++ \
+  && npm ci
+  
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app

@@ -2,28 +2,25 @@
 
 import * as React from "react"
 import Link from "next/link"
+import type { Route } from "next"
 import Image from "next/image"
+import { usePathname, useSearchParams } from "next/navigation"
 import { useSession } from "@/lib/auth-client"
 import {
-  IconUpload,
-  IconChartBar,
-  IconDashboard,
-  IconNetwork,
   IconBook,
+  IconCloud,
+  IconDashboard,
+  IconDeviceDesktop,
   IconFolder,
   IconHelp,
   IconListDetails,
-  IconReport,
   IconSearch,
   IconSettings,
-  IconUsers,
-  IconSchool,
-  IconShield,
-  IconRouter,
-  IconCloud,
-  IconDeviceDesktop,
+  IconUpload,
+  type Icon,
 } from "@tabler/icons-react"
 
+import { QuickCreateLabModal } from "@/components/quick-create-lab-modal"
 import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
@@ -38,157 +35,137 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-const staticData = {
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
-    },
-    {
-      title: "Upload Lab",
-      url: "/upload",
-      icon: IconUpload,
-    },
-    {
-      title: "My Labs",
-      url: "/dashboard?my=true",
-      icon: IconFolder,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Routing",
-      icon: IconRouter,
-      url: "/dashboard?category=Routing",
-      items: [
-        {
-          title: "OSPF Labs",
-          url: "/dashboard?category=Routing&search=OSPF",
-        },
-        {
-          title: "EIGRP Labs",
-          url: "/dashboard?category=Routing&search=EIGRP",
-        },
-        {
-          title: "BGP Labs",
-          url: "/dashboard?category=Routing&search=BGP",
-        },
-      ],
-    },
-    {
-      title: "Switching",
-      icon: IconNetwork,
-      url: "/dashboard?category=Switching",
-      items: [
-        {
-          title: "VLAN Labs",
-          url: "/dashboard?category=Switching&search=VLAN",
-        },
-        {
-          title: "STP Labs",
-          url: "/dashboard?category=Switching&search=STP",
-        },
-        {
-          title: "EtherChannel",
-          url: "/dashboard?category=Switching&search=EtherChannel",
-        },
-      ],
-    },
-    {
-      title: "Security",
-      icon: IconShield,
-      url: "/dashboard?category=Security",
-      items: [
-        {
-          title: "ACL Labs",
-          url: "/dashboard?category=Security&search=ACL",
-        },
-        {
-          title: "VPN Labs",
-          url: "/dashboard?category=Security&search=VPN",
-        },
-        {
-          title: "Firewall Labs",
-          url: "/dashboard?category=Security&search=Firewall",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
-  documents: [
-    {
-      name: "MPLS Labs",
-      url: "/dashboard?category=MPLS",
-      icon: IconCloud,
-    },
-    {
-      name: "Wireless Labs",
-      url: "/dashboard?category=Wireless",
-      icon: IconDeviceDesktop,
-    },
-    {
-      name: "All Categories",
-      url: "/dashboard",
-      icon: IconBook,
-    },
-  ],
+type MainNavigationItem = {
+  title: string
+  url: Route
+  icon: Icon
 }
+
+type DocumentNavigationItem = {
+  name: string
+  url: Route
+  icon: Icon
+  categoryParam?: string
+  exactPath?: Route
+  hasActions?: boolean
+}
+
+type SecondaryNavigationItem = {
+  title: string
+  url: Route
+  icon: Icon
+}
+
+const mainNavigation: MainNavigationItem[] = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: IconDashboard,
+  },
+  {
+    title: "Upload Lab",
+    url: "/upload",
+    icon: IconUpload,
+  },
+  {
+    title: "My Labs",
+    url: "/my-labs",
+    icon: IconFolder,
+  },
+]
+
+const documentNavigation: DocumentNavigationItem[] = [
+  {
+    name: "MPLS Labs",
+    url: "/dashboard?category=MPLS",
+    icon: IconCloud,
+    categoryParam: "MPLS",
+    hasActions: true,
+  },
+  {
+    name: "Wireless Labs",
+    url: "/dashboard?category=Wireless",
+    icon: IconDeviceDesktop,
+    categoryParam: "Wireless",
+    hasActions: true,
+  },
+  {
+    name: "All Categories",
+    url: "/categories",
+    icon: IconBook,
+    exactPath: "/categories",
+  },
+  {
+    name: "More",
+    url: "/resources",
+    icon: IconListDetails,
+    exactPath: "/resources",
+  },
+]
+
+const secondaryNavigation: SecondaryNavigationItem[] = [
+  {
+    title: "Settings",
+    url: "/settings",
+    icon: IconSettings,
+  },
+  {
+    title: "Get Help",
+    url: "/help",
+    icon: IconHelp,
+  },
+  {
+    title: "Search",
+    url: "/search",
+    icon: IconSearch,
+  },
+]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession()
-  
-  const userData = session?.user ? {
-    name: session.user.name || "User",
-    email: session.user.email,
-    avatar: session.user.image || "/codeguide-logo.png",
-  } : {
-    name: "Guest",
-    email: "guest@example.com", 
-    avatar: "/codeguide-logo.png",
-  }
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const [isQuickCreateOpen, setIsQuickCreateOpen] = React.useState(false)
+
+  const userData = session?.user
+    ? {
+        name: session.user.name || "User",
+        email: session.user.email,
+        avatar: session.user.image || "/codeguide-logo.png",
+      }
+    : {
+        name: "Guest",
+        email: "guest@example.com",
+        avatar: "/codeguide-logo.png",
+      }
+
+  const activeCategory = pathname.startsWith("/dashboard") ? searchParams.get("category") : null
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
-              <Link href="/">
-                <Image src="/codeguide-logo.png" alt="CodeGuide" width={32} height={32} className="rounded-lg" />
-                <span className="text-base font-semibold font-parkinsans">NetLabShowcase</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        <NavMain items={staticData.navMain} />
-        <NavDocuments items={staticData.documents} />
-        <NavSecondary items={staticData.navSecondary} className="mt-auto" />
-      </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={userData} />
-      </SidebarFooter>
-    </Sidebar>
+    <>
+      <Sidebar collapsible="offcanvas" {...props}>
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
+                <Link href="/">
+                  <Image src="/codeguide-logo.png" alt="CodeGuide" width={32} height={32} className="rounded-lg" />
+                  <span className="text-base font-semibold font-parkinsans">NetLabShowcase</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent>
+          <NavMain items={mainNavigation} onQuickCreate={() => setIsQuickCreateOpen(true)} />
+          <NavDocuments items={documentNavigation} activeCategory={activeCategory} />
+          <NavSecondary items={secondaryNavigation} className="mt-auto" />
+        </SidebarContent>
+        <SidebarFooter>
+          <NavUser user={userData} />
+        </SidebarFooter>
+      </Sidebar>
+      <QuickCreateLabModal open={isQuickCreateOpen} onOpenChange={setIsQuickCreateOpen} />
+    </>
   )
 }

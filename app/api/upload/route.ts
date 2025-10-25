@@ -1,10 +1,12 @@
+import { Buffer } from 'node:buffer';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/db';
 import { labFiles, labs } from '@/db';
 import { nanoid } from 'nanoid';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
+import { getSupabaseServerClient } from '@/utils/supabaseServer';
 
 const uploadSchema = z.object({
   labId: z.string().min(1, 'Lab ID is required'),
@@ -78,9 +80,43 @@ export async function POST(request: NextRequest) {
       description: description || null,
     });
 
-    // In a production environment, you would upload to a cloud storage service
-    // For now, we'll simulate file storage with a placeholder URL
-    const fileUrl = `/uploads/${nanoid()}-${file.name}`;
+    // Verify the lab exists and belongs to the authenticated user
+    const [ownedLab] = await db
+      .select({ id: labs.id, userId: labs.userId })
+      .from(labs)
+      .where(and(eq(labs.id, validatedData.labId), eq(labs.userId, session.user.id)));
+
+    if (!ownedLab) {
+      return NextResponse.json(
+        { error: 'Lab not found or access denied' },
+        { status: 403 }
+      );
+    }
+
+    // Upload to Supabase Storage
+    const bucket = 'labs-topologies';
+    const path = `topologies/${Date.now()}-${file.name}`;
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const supabaseServer = getSupabaseServerClient();
+
+    const { error: uploadError } = await supabaseServer.storage
+      .from(bucket)
+      .upload(path, buffer, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: file.type,
+      });
+
+    if (uploadError) {
+      return NextResponse.json({ error: `Upload failed: ${uploadError.message}` }, { status: 500 });
+    }
+
+    const { data: urlData } = supabaseServer.storage
+      .from(bucket)
+      .getPublicUrl(path);
+    const fileUrl = urlData.publicUrl;
 
     // Store file metadata in database
     const newFile = {
@@ -108,13 +144,15 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid input data', details: error.errors },
+        { error: 'Invalid input data', details: error.issues },
         { status: 400 }
       );
     }
 
+    const message = error instanceof Error ? error.message : 'Failed to upload file';
+
     return NextResponse.json(
-      { error: 'Failed to upload file' },
+      { error: message },
       { status: 500 }
     );
   }
@@ -143,11 +181,33 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // In a real implementation, you would:
-    // 1. Verify the user owns this file (by joining with labs table)
-    // 2. Delete the file from cloud storage
-    // 3. Delete the file record from database
+    // Verify file exists
+    const [file] = await db
+      .select({ id: labFiles.id, labId: labFiles.labId })
+      .from(labFiles)
+      .where(eq(labFiles.id, fileId));
 
+    if (!file) {
+      return NextResponse.json(
+        { error: 'File not found' },
+        { status: 404 }
+      );
+    }
+
+    // Verify the authenticated user owns the parent lab
+    const [ownedLab] = await db
+      .select({ id: labs.id })
+      .from(labs)
+      .where(and(eq(labs.id, file.labId), eq(labs.userId, session.user.id)));
+
+    if (!ownedLab) {
+      return NextResponse.json(
+        { error: 'Access denied' },
+        { status: 403 }
+      );
+    }
+
+    // Delete the file record (and optionally from storage if tracking path)
     await db.delete(labFiles).where(eq(labFiles.id, fileId));
 
     return NextResponse.json({ message: 'File deleted successfully' });

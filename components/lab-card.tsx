@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, User, Eye, ArrowRight } from 'lucide-react';
+import { Calendar, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface LabCardProps {
@@ -61,13 +61,17 @@ export function LabCard({
     year: 'numeric',
   });
 
+  const imageSrc = topologyImageUrl && !topologyImageUrl.startsWith('/uploads/')
+    ? topologyImageUrl
+    : undefined;
+
   return (
     <Card className={cn('group hover:shadow-lg transition-all duration-300 h-full flex flex-col', className)}>
       {/* Topology Image Section */}
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
-        {topologyImageUrl ? (
+        {imageSrc ? (
           <Image
-            src={topologyImageUrl}
+            src={imageSrc}
             alt={`${title} topology diagram`}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"

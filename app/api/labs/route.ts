@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/db';
 import { labs, user } from '@/db';
-import { eq, desc, and, ilike } from 'drizzle-orm';
+import { eq, desc, and, ilike, or, count } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { nanoid } from 'nanoid';
 
@@ -22,7 +22,8 @@ const getLabsSchema = z.object({
   category: z.string().optional(),
   difficulty: z.string().optional(),
   search: z.string().optional(),
-  status: z.string().optional().default('published'),
+  status: z.enum(['draft', 'published', 'all']).optional().default('published'),
+  userId: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -30,14 +31,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams);
 
-    const { page, limit, category, difficulty, search, status } = getLabsSchema.parse(queryParams);
+    const { page, limit, category, difficulty, search, status, userId } = getLabsSchema.parse(queryParams);
 
     const offset = (page - 1) * limit;
 
     // Build the query conditions
     const conditions = [];
 
-    if (status) {
+    if (status && status !== 'all') {
       conditions.push(eq(labs.status, status));
     }
 
@@ -51,8 +52,26 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       conditions.push(
-        ilike(labs.title, `%${search}%`)
+        or(
+          ilike(labs.title, `%${search}%`),
+          ilike(labs.description, `%${search}%`)
+        )
       );
+    }
+
+    if (userId) {
+      const session = await auth.api.getSession({
+        headers: request.headers,
+      });
+
+      if (!session?.user || session.user.id !== userId) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 403 }
+        );
+      }
+
+      conditions.push(eq(labs.userId, userId));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -83,12 +102,11 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    // Get total count for pagination
-    const totalCount = await db
-      .select({ count: { id: labs.id } })
+    // Get total count for pagination (efficient COUNT(*))
+    const [{ value: totalCount }] = await db
+      .select({ value: count() })
       .from(labs)
-      .where(whereClause)
-      .then(result => result.length);
+      .where(whereClause);
 
     return NextResponse.json({
       labs: labsData,
@@ -104,7 +122,7 @@ export async function GET(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid query parameters', details: error.errors },
+        { error: 'Invalid query parameters', details: error.issues },
         { status: 400 }
       );
     }
@@ -154,7 +172,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid input data', details: error.errors },
+        { error: 'Invalid input data', details: error.issues },
         { status: 400 }
       );
     }

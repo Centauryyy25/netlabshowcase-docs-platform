@@ -5,6 +5,7 @@ export const labs = pgTable("labs", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
+  labNotes: text("lab_notes"),
   category: text("category").notNull(), // Routing, Switching, Security, MPLS, etc.
   difficulty: text("difficulty").notNull(), // Beginner, Intermediate, Advanced
   userId: text("user_id")

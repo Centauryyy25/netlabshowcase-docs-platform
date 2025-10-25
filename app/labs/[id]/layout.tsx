@@ -1,16 +1,21 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 
-interface LabDetailLayoutProps {
+type LabLayoutParams = { id: string };
+
+type LabDetailLayoutProps = {
   children: React.ReactNode;
-  params: {
-    id: string;
-  };
-}
+  params: LabLayoutParams | Promise<LabLayoutParams>;
+};
 
-export async function generateMetadata(
-  { params }: { params: { id: string } }
-): Promise<Metadata> {
+const resolveParams = async (params: LabDetailLayoutProps['params']) =>
+  Promise.resolve(params);
+
+export async function generateMetadata(props: {
+  params: LabDetailLayoutProps['params'];
+}): Promise<Metadata> {
   try {
+    const { id } = await resolveParams(props.params);
+
     // In a real implementation, you'd fetch the lab data here
     // For now, we'll return generic metadata
     return {
@@ -21,10 +26,10 @@ export async function generateMetadata(
         title: `Network Lab - NetLabShowcase`,
         description: `Explore this networking lab on NetLabShowcase. Learn about network configurations, topologies, and hands-on exercises.`,
         type: 'article',
-        url: `https://netlabshowcase.com/labs/${params.id}`,
+        url: `https://netlabshowcase.com/labs/${id}`,
         images: [
           {
-            url: '/api/og/labs/' + params.id,
+            url: '/api/og/labs/' + id,
             width: 1200,
             height: 630,
             alt: 'Network Lab Topology',
@@ -35,13 +40,13 @@ export async function generateMetadata(
         card: 'summary_large_image',
         title: `Network Lab - NetLabShowcase`,
         description: `Explore this networking lab on NetLabShowcase. Learn about network configurations, topologies, and hands-on exercises.`,
-        images: ['/api/og/labs/' + params.id],
+        images: ['/api/og/labs/' + id],
       },
       alternates: {
-        canonical: `https://netlabshowcase.com/labs/${params.id}`,
+        canonical: `https://netlabshowcase.com/labs/${id}`,
       },
     };
-  } catch (error) {
+  } catch {
     return {
       title: 'Network Lab - NetLabShowcase',
       description: 'Explore networking labs on NetLabShowcase',
@@ -49,6 +54,10 @@ export async function generateMetadata(
   }
 }
 
-export default function LabDetailLayout({ children }: LabDetailLayoutProps) {
+export default async function LabDetailLayout({
+  children,
+  params,
+}: LabDetailLayoutProps) {
+  await resolveParams(params);
   return children;
 }

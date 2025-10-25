@@ -1,5 +1,8 @@
 "use client"
 
+import Link from "next/link"
+import type { Route } from "next"
+import { usePathname } from "next/navigation"
 import {
   IconDots,
   IconFolder,
@@ -15,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -25,16 +29,36 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-export function NavDocuments({
-  items,
-}: {
-  items: {
-    name: string
-    url: string
-    icon: Icon
-  }[]
-}) {
+type DocumentLink = {
+  name: string
+  url: Route
+  icon: Icon
+  categoryParam?: string
+  exactPath?: Route
+  hasActions?: boolean
+}
+
+interface NavDocumentsProps {
+  items: DocumentLink[]
+  activeCategory?: string | null
+}
+
+export function NavDocuments({ items, activeCategory }: NavDocumentsProps) {
   const { isMobile } = useSidebar()
+  const pathname = usePathname()
+
+  const isActive = (item: DocumentLink) => {
+    if (item.categoryParam) {
+      return pathname.startsWith("/dashboard") && activeCategory === item.categoryParam
+    }
+
+    if (item.exactPath) {
+      return pathname === item.exactPath
+    }
+
+    const basePath = item.url.split("?")[0]
+    return pathname === basePath
+  }
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -42,50 +66,54 @@ export function NavDocuments({
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
-              <a href={item.url}>
-                <item.icon />
+            <SidebarMenuButton
+              asChild
+              className={cn(
+                "transition-all duration-150",
+                isActive(item)
+                  ? "bg-primary/10 text-primary shadow-inner"
+                  : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+              )}
+            >
+              <Link href={item.url}>
+                <item.icon className="size-4" />
                 <span>{item.name}</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuAction
-                  showOnHover
-                  className="data-[state=open]:bg-accent rounded-sm"
+            {item.hasActions && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuAction
+                    showOnHover
+                    className="rounded-sm data-[state=open]:bg-accent"
+                  >
+                    <IconDots />
+                    <span className="sr-only">More</span>
+                  </SidebarMenuAction>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-24 rounded-lg"
+                  side={isMobile ? "bottom" : "right"}
+                  align={isMobile ? "end" : "start"}
                 >
-                  <IconDots />
-                  <span className="sr-only">More</span>
-                </SidebarMenuAction>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-24 rounded-lg"
-                side={isMobile ? "bottom" : "right"}
-                align={isMobile ? "end" : "start"}
-              >
-                <DropdownMenuItem>
-                  <IconFolder />
-                  <span>Open</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <IconShare3 />
-                  <span>Share</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
-                  <IconTrash />
-                  <span>Delete</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem>
+                    <IconFolder />
+                    <span>Open</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <IconShare3 />
+                    <span>Share</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive">
+                    <IconTrash />
+                    <span>Delete</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </SidebarMenuItem>
         ))}
-        <SidebarMenuItem>
-          <SidebarMenuButton className="text-sidebar-foreground/70">
-            <IconDots className="text-sidebar-foreground/70" />
-            <span>More</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>
   )

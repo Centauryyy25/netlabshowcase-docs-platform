@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { labs, labFiles } from '@/db';
 import { eq } from 'drizzle-orm';
+import { defineRoute } from '@/types/route';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+type LabRouteParams = { id: string };
+
+export const GET = defineRoute<LabRouteParams>(async (request: NextRequest, { params }) => {
   try {
     const { id } = params;
 
@@ -77,4 +77,4 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});
