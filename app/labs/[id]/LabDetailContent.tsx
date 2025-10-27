@@ -1,5 +1,6 @@
 'use client';
 
+import { ImageZoom } from '@/components/ui/shadcn-io/image-zoom';
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from '@/lib/auth-client';
 import { useParams, useRouter } from 'next/navigation';
@@ -528,28 +529,30 @@ export default function LabDetailContent() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
+              <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
                 {lab.topologyImageUrl && !imageError ? (
                   <>
                     {imageLoading && (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
                       </div>
                     )}
-                    <Image
-                      src={lab.topologyImageUrl}
-                      alt={`${lab.title} topology diagram`}
-                      fill
-                      className="object-contain"
-                      sizes="(max-width: 1024px) 100vw, 66vw"
-                      onLoad={() => setImageLoading(false)}
-                      onError={() => setImageError(true)}
-                    />
+                    <ImageZoom className="h-full w-full">
+                      <Image
+                        src={lab.topologyImageUrl}
+                        alt={`${lab.title} topology diagram`}
+                        fill
+                        className="object-contain"
+                        sizes="(max-width: 1024px) 100vw, 66vw"
+                        onLoad={() => setImageLoading(false)}
+                        onError={() => setImageError(true)}
+                      />
+                    </ImageZoom>
                   </>
                 ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center space-y-2">
-                      <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground" />
+                  <div className="flex h-full items-center justify-center">
+                    <div className="space-y-2 text-center">
+                      <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
                       <p className="text-muted-foreground">No topology image available</p>
                     </div>
                   </div>
