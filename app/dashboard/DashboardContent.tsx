@@ -145,18 +145,18 @@ export default function DashboardContent() {
   ].filter(Boolean).length;
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Networking Labs</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold sm:text-3xl">Networking Labs</h1>
+          <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
             Discover and explore network topology labs from the community
             {totalLabs > 0 && ` ${totalLabs} labs available`}
           </p>
         </div>
 
-        <Button asChild>
+        <Button asChild className="h-11 w-full sm:w-auto">
           <Link href="/upload" className="flex items-center gap-2">
             <Upload className="h-4 w-4" />
             Upload Lab
@@ -234,11 +234,11 @@ export default function DashboardContent() {
           </div>
 
           {activeFiltersCount > 0 && (
-            <div className="flex items-center gap-2 mt-4">
-              <Button variant="outline" size="sm" onClick={clearFilters}>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button variant="outline" size="sm" className="h-10 w-full sm:w-auto" onClick={clearFilters}>
                 Clear Filters
               </Button>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-2">
                 {selectedCategory && (
                   <Badge variant="secondary">Category: {selectedCategory}</Badge>
                 )}
@@ -259,23 +259,24 @@ export default function DashboardContent() {
       {/* Results Section */}
       <div className="space-y-4">
         {/* Results Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-lg font-semibold sm:text-xl">
               {loading ? 'Loading labs...' : `${totalLabs} labs found`}
             </h2>
             {!loading && labs.length === 0 && (
-              <p className="text-muted-foreground">
+              <p className="text-sm text-muted-foreground sm:text-base">
                 Try adjusting your filters or search terms
               </p>
             )}
           </div>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             <Button
               variant={viewMode === 'grid' ? 'default' : 'outline'}
               size="sm"
+              className="h-10 w-12"
               onClick={() => setViewMode('grid')}
             >
               <Grid className="h-4 w-4" />
@@ -283,6 +284,7 @@ export default function DashboardContent() {
             <Button
               variant={viewMode === 'list' ? 'default' : 'outline'}
               size="sm"
+              className="h-10 w-12"
               onClick={() => setViewMode('list')}
             >
               <List className="h-4 w-4" />
@@ -292,7 +294,7 @@ export default function DashboardContent() {
 
         {/* Labs Grid/List */}
         {loading ? (
-          <div className={`grid gap-6 ${
+          <div className={`grid gap-5 sm:gap-6 ${
             viewMode === 'grid'
               ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
               : 'grid-cols-1'
@@ -315,7 +317,7 @@ export default function DashboardContent() {
             ))}
           </div>
         ) : labs.length > 0 ? (
-          <div className={`grid gap-6 ${
+          <div className={`grid gap-5 sm:gap-6 ${
             viewMode === 'grid'
               ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
               : 'grid-cols-1'
@@ -339,7 +341,7 @@ export default function DashboardContent() {
                     Try adjusting your filters or be the first to upload a lab in this category!
                   </p>
                 </div>
-                <Button asChild>
+                <Button asChild className="h-11 w-full sm:w-auto">
                   <Link href="/upload">
                     <Plus className="h-4 w-4 mr-2" />
                     Upload First Lab
@@ -352,10 +354,11 @@ export default function DashboardContent() {
 
         {/* Pagination */}
         {!loading && totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <Button
               variant="outline"
               size="sm"
+              className="h-10 px-4"
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
             >
@@ -372,6 +375,7 @@ export default function DashboardContent() {
                     key={page}
                     variant={isCurrentPage ? 'default' : 'outline'}
                     size="sm"
+                    className="h-10 min-w-[2.5rem]"
                     onClick={() => setCurrentPage(page)}
                   >
                     {page}
@@ -385,6 +389,7 @@ export default function DashboardContent() {
                   <Button
                     variant={currentPage === totalPages ? 'default' : 'outline'}
                     size="sm"
+                    className="h-10 min-w-[2.5rem]"
                     onClick={() => setCurrentPage(totalPages)}
                   >
                     {totalPages}
@@ -396,6 +401,7 @@ export default function DashboardContent() {
             <Button
               variant="outline"
               size="sm"
+              className="h-10 px-4"
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
             >

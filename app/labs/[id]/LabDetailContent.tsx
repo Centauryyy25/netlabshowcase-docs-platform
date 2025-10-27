@@ -413,7 +413,7 @@ export default function LabDetailContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#050f24] text-foreground">
-        <div className="container mx-auto space-y-6 py-8">
+        <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
           <div className="space-y-4 animate-pulse">
             <div className="h-8 w-64 rounded bg-slate-800/60"></div>
             <div className="h-64 rounded bg-slate-800/60"></div>
@@ -436,12 +436,12 @@ export default function LabDetailContent() {
   if (!labData) {
     return (
       <div className="min-h-screen bg-[#050f24] text-foreground">
-        <div className="container mx-auto py-8 text-center">
+        <div className="container mx-auto px-4 py-8 text-center sm:px-6">
           <h1 className="mb-4 text-2xl font-bold">Lab not found</h1>
           <p className="mb-6 text-muted-foreground">
             The lab you&rsquo;re looking for doesn&rsquo;t exist or has been removed.
           </p>
-          <Button asChild>
+          <Button asChild className="h-11 w-full sm:w-auto">
             <Link href="/dashboard">Back to Dashboard</Link>
           </Button>
         </div>
@@ -457,7 +457,7 @@ export default function LabDetailContent() {
 
   return (
     <div className="min-h-screen bg-[#050f24] text-foreground">
-      <div className="container mx-auto space-y-6 py-8">
+      <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
       {/* Breadcrumb Navigation */}
       <Breadcrumb>
         <BreadcrumbList>
@@ -486,15 +486,15 @@ export default function LabDetailContent() {
                 {lab.difficulty}
               </Badge>
             </div>
-            <h1 className="text-3xl font-bold">{lab.title}</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">{lab.title}</h1>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleShare}>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <Button variant="outline" size="sm" className="h-11 w-full sm:w-auto" onClick={handleShare}>
               <Share2 className="h-4 w-4 mr-2" />
               Share
             </Button>
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="h-11 w-full sm:w-auto">
               <Link href="/dashboard">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Labs
@@ -503,13 +503,13 @@ export default function LabDetailContent() {
           </div>
         </div>
 
-        <p className="text-lg text-muted-foreground max-w-4xl">{lab.description}</p>
+        <p className="max-w-4xl text-base leading-relaxed text-muted-foreground sm:text-lg">{lab.description}</p>
 
         {/* Tags */}
         {lab.tags.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {lab.tags.map((tag, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
+              <Badge key={index} variant="secondary" className="text-xs sm:text-sm">
                 {tag}
               </Badge>
             ))}
@@ -517,18 +517,18 @@ export default function LabDetailContent() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Topology Image */}
           <Card>
-            <CardHeader>
+            <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
               <CardTitle className="flex items-center gap-2">
                 <ImageIcon className="h-5 w-5" />
                 Network Topology
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 py-4 sm:px-6 sm:py-6">
               <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
                 {lab.topologyImageUrl && !imageError ? (
                   <>
@@ -542,7 +542,7 @@ export default function LabDetailContent() {
                         src={lab.topologyImageUrl}
                         alt={`${lab.title} topology diagram`}
                         fill
-                        className="object-contain"
+                        className="object-none "
                         sizes="(max-width: 1024px) 100vw, 66vw"
                         onLoad={() => setImageLoading(false)}
                         onError={() => setImageError(true)}
@@ -567,7 +567,13 @@ export default function LabDetailContent() {
                       className="hidden"
                       onChange={handleTopologyFileChange}
                     />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById('topology-file')?.click()} disabled={isUploading}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 w-full sm:w-auto"
+                      onClick={() => document.getElementById('topology-file')?.click()}
+                      disabled={isUploading}
+                    >
                       {isUploading ? 'Uploading...' : 'Change Image'}
                     </Button>
                   </div>
@@ -584,12 +590,12 @@ export default function LabDetailContent() {
                     </p>
                   </div>
                   {isAuthor && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                       <Button
                         type="button"
                         size="sm"
                         variant={isEditingNotes ? 'outline' : 'secondary'}
-                        className="gap-2 rounded-full"
+                        className="h-10 w-full gap-2 rounded-full px-4 sm:h-11 sm:w-auto"
                         onClick={handleToggleEditingNotes}
                         disabled={isSavingNotes}
                       >
@@ -620,11 +626,11 @@ export default function LabDetailContent() {
                   />
                 ) : lab.labNotes ? (
                   <div
-                    className="prose dark:prose-invert max-w-none rounded-xl border border-white/5 bg-white/5 p-6 backdrop-blur"
+                    className="prose dark:prose-invert max-w-none rounded-xl border border-white/5 bg-white/5 p-4 backdrop-blur sm:p-6"
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(lab.labNotes) }}
                   />
                 ) : (
-                  <div className="rounded-xl border border-dashed border-white/10 bg-white/5 p-6 text-sm text-muted-foreground">
+                  <div className="rounded-xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-muted-foreground sm:p-6">
                     The author hasn&apos;t added detailed notes yet.
                   </div>
                 )}
@@ -635,7 +641,7 @@ export default function LabDetailContent() {
           {/* Configuration Files */}
           {files.length > 0 && (
             <Card>
-              <CardHeader>
+              <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
                   Configuration Files & Resources
@@ -644,9 +650,9 @@ export default function LabDetailContent() {
                   Download configuration files, packet traces, and additional resources
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 py-4 sm:px-6 sm:py-6">
                 <Tabs defaultValue="all" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
+                  <TabsList className="grid w-full grid-cols-2 gap-2 sm:gap-4">
                     <TabsTrigger value="all">All Files</TabsTrigger>
                     <TabsTrigger value="configs">Configurations</TabsTrigger>
                   </TabsList>
@@ -655,7 +661,7 @@ export default function LabDetailContent() {
                     {files.map((file) => {
                       const FileIcon = getFileIcon(file.fileType);
                       return (
-                        <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div key={file.id} className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
                           <div className="flex items-center gap-3">
                             <FileIcon className="h-5 w-5 text-muted-foreground" />
                             <div>
@@ -673,6 +679,7 @@ export default function LabDetailContent() {
                           <Button
                             variant="outline"
                             size="sm"
+                            className="h-11 w-full sm:w-auto"
                             onClick={() => handleDownload(file)}
                           >
                             <Download className="h-4 w-4 mr-2" />
@@ -689,7 +696,7 @@ export default function LabDetailContent() {
                       .map((file) => {
                         const FileIcon = getFileIcon(file.fileType);
                         return (
-                          <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div key={file.id} className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-3">
                               <FileIcon className="h-5 w-5 text-muted-foreground" />
                               <div>
@@ -702,6 +709,7 @@ export default function LabDetailContent() {
                             <Button
                               variant="outline"
                               size="sm"
+                              className="h-11 w-full sm:w-auto"
                               onClick={() => handleDownload(file)}
                             >
                               <Download className="h-4 w-4 mr-2" />
@@ -721,10 +729,10 @@ export default function LabDetailContent() {
         <div className="space-y-6">
           {/* Lab Information */}
           <Card>
-            <CardHeader>
+            <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
               <CardTitle>Lab Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-4 py-4 sm:px-6 sm:py-6">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={lab.author.image} alt={lab.author.name} />
@@ -762,17 +770,17 @@ export default function LabDetailContent() {
               <div className="space-y-2">
                 <h4 className="font-medium">Lab Details</h4>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-muted-foreground">Category:</span>
                     <Badge variant="outline">{lab.category}</Badge>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-muted-foreground">Difficulty:</span>
                     <Badge className={difficultyColors[lab.difficulty]}>
                       {lab.difficulty}
                     </Badge>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-muted-foreground">Files:</span>
                     <span>{files.length} file(s)</span>
                   </div>
@@ -783,12 +791,12 @@ export default function LabDetailContent() {
 
           {/* Quick Actions */}
           <Card>
-            <CardHeader>
+            <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-3 px-4 py-4 sm:px-6 sm:py-6">
               <Button
-                className="w-full"
+                className="h-11 w-full"
                 variant="default"
                 onClick={() => {
                   const element = document.getElementById('ai-assistant-section');
@@ -799,7 +807,7 @@ export default function LabDetailContent() {
                 AI Assistant
               </Button>
 
-              <Button className="w-full" variant="outline" asChild>
+              <Button className="h-11 w-full" variant="outline" asChild>
                 <Link href={`/upload?duplicate=${lab.id}`}>
                   <Package className="h-4 w-4 mr-2" />
                   Duplicate Lab
@@ -807,7 +815,7 @@ export default function LabDetailContent() {
               </Button>
 
               <Button
-                className="w-full"
+                className="h-11 w-full"
                 variant="outline"
                 onClick={() => window.open(`/api/labs/${lab.id}/export`, '_blank')}
               >
@@ -823,8 +831,8 @@ export default function LabDetailContent() {
       <div id="ai-assistant-section" className="space-y-6">
         <Separator />
         <div>
-          <h2 className="text-2xl font-bold mb-4">AI Lab Assistant</h2>
-          <p className="text-muted-foreground mb-6">
+          <h2 className="mb-4 text-xl font-bold sm:text-2xl">AI Lab Assistant</h2>
+          <p className="mb-6 text-sm leading-relaxed text-muted-foreground sm:text-base">
             Get personalized help understanding this network topology, configurations, and concepts
           </p>
           <div className="max-w-4xl">
@@ -844,8 +852,8 @@ export default function LabDetailContent() {
         <div className="space-y-6">
           <Separator />
           <div>
-            <h2 className="text-2xl font-bold mb-4">Related Labs</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <h2 className="mb-4 text-xl font-bold sm:text-2xl">Related Labs</h2>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
               {relatedLabs.map((relatedLab) => (
                 <LabCard key={relatedLab.id} {...relatedLab} />
               ))}

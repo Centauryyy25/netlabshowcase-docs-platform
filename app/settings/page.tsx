@@ -25,7 +25,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -41,8 +41,8 @@ export default function SettingsPage() {
       </Breadcrumb>
 
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl font-bold sm:text-3xl">Settings</h1>
+        <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
           Manage your profile, notification preferences, and connected services.
         </p>
       </div>
@@ -50,11 +50,13 @@ export default function SettingsPage() {
       <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
         <div className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Profile</CardTitle>
-              <CardDescription>Update your personal information and how other members see you.</CardDescription>
+            <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
+              <CardTitle className="text-lg sm:text-xl">Profile</CardTitle>
+              <CardDescription className="text-sm leading-relaxed sm:text-base">
+                Update your personal information and how other members see you.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-4 pb-5 pt-0 sm:px-6">
               <div className="grid gap-2">
                 <Label htmlFor="display-name">Display name</Label>
                 <Input
@@ -78,27 +80,31 @@ export default function SettingsPage() {
                 <Label>Authentication provider</Label>
                 <Input value="BetterAuth" readOnly className="bg-muted/50" />
               </div>
-              <Button onClick={handleSave} className="ml-auto">
+              <Button onClick={handleSave} className="h-11 w-full sm:w-auto sm:self-end">
                 Save changes
               </Button>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Preferences</CardTitle>
-              <CardDescription>Control theme, updates, and notifications.</CardDescription>
+            <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
+              <CardTitle className="text-lg sm:text-xl">Preferences</CardTitle>
+              <CardDescription className="text-sm leading-relaxed sm:text-base">
+                Control theme, updates, and notifications.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border border-border/40 px-4 py-3">
-                <div>
+            <CardContent className="space-y-4 px-4 pb-5 pt-0 sm:px-6">
+              <div className="flex flex-col gap-3 rounded-lg border border-border/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
                   <p className="font-medium">Dark mode</p>
-                  <p className="text-sm text-muted-foreground">Switch themes instantly across NetLabShowcase.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Switch themes instantly across NetLabShowcase.
+                  </p>
                 </div>
                 <Switch checked={darkMode} onCheckedChange={setDarkMode} />
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-border/40 px-4 py-3">
-                <div>
+              <div className="flex flex-col gap-3 rounded-lg border border-border/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
                   <p className="font-medium">Lab updates</p>
                   <p className="text-sm text-muted-foreground">
                     Receive alerts when collaborators update shared labs.
@@ -112,15 +118,17 @@ export default function SettingsPage() {
 
         <div className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Security</CardTitle>
-              <CardDescription>Secure your account with additional protections.</CardDescription>
+            <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
+              <CardTitle className="text-lg sm:text-xl">Security</CardTitle>
+              <CardDescription className="text-sm leading-relaxed sm:text-base">
+                Secure your account with additional protections.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Button variant="outline" className="w-full">
+            <CardContent className="space-y-4 px-4 pb-5 pt-0 sm:px-6">
+              <Button variant="outline" className="h-11 w-full">
                 Reset password
               </Button>
-              <Button variant="ghost" className="w-full">
+              <Button variant="ghost" className="h-11 w-full">
                 Configure MFA (coming soon)
               </Button>
               <Separator />
@@ -132,26 +140,32 @@ export default function SettingsPage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Connected Integrations</CardTitle>
-              <CardDescription>Manage data sync with external providers.</CardDescription>
+            <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
+              <CardTitle className="text-lg sm:text-xl">Connected Integrations</CardTitle>
+              <CardDescription className="text-sm leading-relaxed sm:text-base">
+                Manage data sync with external providers.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border border-border/40 px-4 py-3">
-                <div>
+            <CardContent className="space-y-4 px-4 pb-5 pt-0 sm:px-6">
+              <div className="flex flex-col gap-3 rounded-lg border border-border/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
                   <p className="font-medium">Supabase</p>
                   <p className="text-sm text-muted-foreground">Storage and database for topology assets.</p>
                 </div>
-                <Badge variant="secondary">Connected</Badge>
+                <Badge variant="secondary" className="self-start sm:self-auto">
+                  Connected
+                </Badge>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-border/40 px-4 py-3">
-                <div>
+              <div className="flex flex-col gap-3 rounded-lg border border-border/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
                   <p className="font-medium">BetterAuth</p>
                   <p className="text-sm text-muted-foreground">Secure authentication and session management.</p>
                 </div>
-                <Badge variant="secondary">Connected</Badge>
+                <Badge variant="secondary" className="self-start sm:self-auto">
+                  Connected
+                </Badge>
               </div>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="h-11 w-full">
                 Add integration
               </Button>
             </CardContent>
@@ -161,4 +175,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-

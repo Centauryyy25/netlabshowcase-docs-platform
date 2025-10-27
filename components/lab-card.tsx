@@ -68,7 +68,7 @@ export function LabCard({
   return (
     <Card className={cn('group hover:shadow-lg transition-all duration-300 h-full flex flex-col', className)}>
       {/* Topology Image Section */}
-      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+      <div className="relative h-40 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 sm:h-48">
         {imageSrc ? (
           <Image
             src={imageSrc}
@@ -101,31 +101,31 @@ export function LabCard({
         </div>
       </div>
 
-      <CardHeader className="flex-1 pb-3">
+      <CardHeader className="flex-1 px-4 pb-4 pt-4 sm:px-6 sm:pb-3 sm:pt-6">
         <div className="space-y-2">
-          <CardTitle className="line-clamp-2 text-lg group-hover:text-blue-600 transition-colors">
+          <CardTitle className="line-clamp-2 text-lg group-hover:text-blue-600 transition-colors sm:text-xl">
             <Link href={`/labs/${id}`} className="hover:underline">
               {title}
             </Link>
           </CardTitle>
 
-          <CardDescription className="line-clamp-3 text-sm">
+          <CardDescription className="line-clamp-3 text-sm leading-relaxed sm:text-base">
             {description}
           </CardDescription>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4 pb-3">
+      <CardContent className="space-y-4 px-4 pb-4 pt-0 sm:px-6 sm:pb-3">
         {/* Tags */}
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-2">
             {tags.slice(0, 3).map((tag, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
+              <Badge key={index} variant="outline" className="text-xs sm:text-sm">
                 {tag}
               </Badge>
             ))}
             {tags.length > 3 && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs sm:text-sm">
                 +{tags.length - 3}
               </Badge>
             )}
@@ -133,27 +133,27 @@ export function LabCard({
         )}
 
         {/* Author and Date */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground sm:flex-nowrap">
+          <div className="flex min-w-0 items-center gap-2">
             <Avatar className="h-6 w-6">
               <AvatarImage src={author.image} alt={author.name} />
               <AvatarFallback className="text-xs">
                 {author.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span className="truncate max-w-24">{author.name}</span>
+            <span className="max-w-[10rem] truncate text-sm sm:max-w-[6rem]">{author.name}</span>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 text-xs sm:text-sm">
             <Calendar className="h-3 w-3" />
             <span>{formattedDate}</span>
           </div>
         </div>
       </CardContent>
 
-      <CardFooter className="pt-0">
-        <Button asChild className="w-full group/btn">
-          <Link href={`/labs/${id}`} className="flex items-center justify-between">
+      <CardFooter className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
+        <Button asChild className="h-11 w-full group/btn">
+          <Link href={`/labs/${id}`} className="flex w-full items-center justify-between gap-3 text-sm sm:text-base">
             <span>View Lab</span>
             <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
           </Link>

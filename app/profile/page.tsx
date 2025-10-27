@@ -21,7 +21,7 @@ export default function ProfilePage() {
   }, [session?.user?.name])
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -37,22 +37,24 @@ export default function ProfilePage() {
       </Breadcrumb>
 
       <Card className="border-border/50 bg-muted/10 backdrop-blur">
-        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
+        <CardHeader className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <Avatar className="h-16 w-16 rounded-lg">
               <AvatarImage src={session?.user?.image ?? undefined} alt={displayName} />
               <AvatarFallback className="rounded-lg text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-2xl font-semibold">{displayName}</CardTitle>
-              <CardDescription>{session?.user?.email ?? "Sign in to personalize your profile."}</CardDescription>
+              <CardTitle className="text-xl font-semibold sm:text-2xl">{displayName}</CardTitle>
+              <CardDescription className="text-sm leading-relaxed sm:text-base">
+                {session?.user?.email ?? "Sign in to personalize your profile."}
+              </CardDescription>
             </div>
           </div>
           <Badge variant="secondary" className="self-start">
             Member since 2025
           </Badge>
         </CardHeader>
-        <CardContent className="grid gap-6 lg:grid-cols-[2fr,1fr]">
+        <CardContent className="grid gap-6 px-4 pb-5 pt-0 sm:px-6 lg:grid-cols-[2fr,1fr]">
           <div className="space-y-4">
             <div className="grid gap-2">
               <label htmlFor="profile-headline" className="text-sm font-medium">
@@ -74,7 +76,9 @@ export default function ProfilePage() {
               />
             </div>
             <div className="flex justify-end">
-              <Button disabled={!session?.user}>Save profile</Button>
+              <Button className="h-11 w-full sm:w-auto" disabled={!session?.user}>
+                Save profile
+              </Button>
             </div>
           </div>
           <div className="space-y-4">
@@ -84,7 +88,7 @@ export default function ProfilePage() {
                 Keep track of labs you have published or collaborated on. Activity history will appear here.
               </p>
             </div>
-            <div className="rounded-lg border border-border/40 bg-background/50 p-4 space-y-2">
+            <div className="space-y-2 rounded-lg border border-border/40 bg-background/50 p-4">
               <p className="text-sm font-medium">Connected accounts</p>
               <Badge variant="outline">BetterAuth</Badge>
               <Badge variant="outline">Supabase</Badge>
@@ -98,4 +102,3 @@ export default function ProfilePage() {
     </div>
   )
 }
-

@@ -64,7 +64,7 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -80,8 +80,8 @@ export default function SearchPage() {
       </Breadcrumb>
 
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Global Search</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl font-bold sm:text-3xl">Global Search</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
           Explore labs, categories, and author contributions across the entire NetLabShowcase library.
         </p>
       </div>
@@ -91,15 +91,15 @@ export default function SearchPage() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search labs by title, technology, or author"
-          className="sm:max-w-xl"
+          className="w-full sm:max-w-xl"
         />
-        <Button type="submit" size="lg" disabled={loading}>
+        <Button type="submit" size="lg" className="h-11 w-full sm:w-auto" disabled={loading}>
           {loading ? "Searching..." : "Search"}
         </Button>
       </form>
 
       {loading ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, index) => (
             <Card key={index} className="h-full">
               <Skeleton className="h-40 w-full" />
@@ -121,13 +121,13 @@ export default function SearchPage() {
             <CardDescription>
               Try a different keyword or browse categories to discover new topologies.
             </CardDescription>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
               <Link href="/categories">Browse categories</Link>
             </Button>
           </CardContent>
         </Card>
       ) : labs.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {labs.map((lab) => (
             <LabCard
               key={lab.id}

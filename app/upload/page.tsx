@@ -226,8 +226,8 @@ export default function UploadPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Basic Information</h2>
-              <p className="text-muted-foreground">Tell us about your networking lab</p>
+              <h2 className="mb-2 text-xl font-bold sm:text-2xl">Basic Information</h2>
+              <p className="text-sm text-muted-foreground sm:text-base">Tell us about your networking lab</p>
             </div>
 
             <FormField<LabFormData>
@@ -332,8 +332,8 @@ export default function UploadPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Classification</h2>
-              <p className="text-muted-foreground">Help categorize your lab for better discovery</p>
+              <h2 className="mb-2 text-xl font-bold sm:text-2xl">Classification</h2>
+              <p className="text-sm text-muted-foreground sm:text-base">Help categorize your lab for better discovery</p>
             </div>
 
             <FormField<LabFormData>
@@ -449,8 +449,8 @@ export default function UploadPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Files & Resources</h2>
-              <p className="text-muted-foreground">Upload topology diagrams and configuration files</p>
+              <h2 className="mb-2 text-xl font-bold sm:text-2xl">Files & Resources</h2>
+              <p className="text-sm text-muted-foreground sm:text-base">Upload topology diagrams and configuration files</p>
             </div>
 
             {/* Topology Image Upload (Supabase Storage) */}
@@ -502,6 +502,7 @@ export default function UploadPage() {
                       type="button"
                       variant="outline"
                       size="sm"
+                      className="h-10 w-full sm:w-auto"
                       onClick={() => form.setValue('additionalFiles', [])}
                     >
                       Clear All
@@ -555,7 +556,7 @@ export default function UploadPage() {
 
   if (currentStep === 4) {
     return (
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto px-4 py-8 sm:px-6">
         <Card className="max-w-md mx-auto">
           <CardContent className="pt-6">
             {renderStepContent()}
@@ -567,8 +568,8 @@ export default function UploadPage() {
 
   if (isPending) {
     return (
-      <div className="container mx-auto py-8">
-        <Card className="max-w-md mx-auto">
+      <div className="container mx-auto px-4 py-8 sm:px-6">
+        <Card className="mx-auto max-w-md">
           <CardHeader>
             <CardTitle>Loading...</CardTitle>
             <CardDescription>Checking your session</CardDescription>
@@ -583,18 +584,18 @@ export default function UploadPage() {
 
   if (!session?.user) {
     return (
-      <div className="container mx-auto py-16">
-        <Card className="max-w-xl mx-auto">
+      <div className="container mx-auto px-4 py-16 sm:px-6">
+        <Card className="mx-auto max-w-xl">
           <CardHeader>
             <CardTitle>Sign in required</CardTitle>
             <CardDescription>You need to be signed in to upload a lab.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-3">
-              <Button asChild>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button asChild className="h-11 w-full sm:w-auto">
                 <Link href="/sign-in">Sign In</Link>
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
                 <Link href="/sign-up">Create Account</Link>
               </Button>
             </div>
@@ -605,13 +606,13 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="container mx-auto px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-2xl px-4 sm:px-0">
         {/* Progress Bar */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
+          <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-sm font-medium">Step {currentStep} of 3</span>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs text-muted-foreground sm:text-sm">
               {currentStep === 1 && 'Basic Information'}
               {currentStep === 2 && 'Classification'}
               {currentStep === 3 && 'Files & Resources'}
@@ -621,22 +622,23 @@ export default function UploadPage() {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Upload New Lab</CardTitle>
+          <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
+            <CardTitle className="text-xl sm:text-2xl">Upload New Lab</CardTitle>
             <CardDescription>
               Share your networking knowledge with the community
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 py-4 sm:px-6 sm:py-6">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 {renderStepContent()}
 
                 {/* Navigation Buttons */}
-                <div className="flex justify-between pt-6 border-t">
+                <div className="flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between">
                   <Button
                     type="button"
                     variant="outline"
+                    className="h-11 w-full sm:w-auto"
                     onClick={prevStep}
                     disabled={currentStep === 1}
                   >
@@ -645,12 +647,12 @@ export default function UploadPage() {
                   </Button>
 
                   {currentStep < 3 ? (
-                    <Button type="button" onClick={nextStep}>
+                    <Button type="button" className="h-11 w-full sm:w-auto" onClick={nextStep}>
                       Next
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   ) : (
-                    <Button type="submit" disabled={isSubmitting}>
+                    <Button type="submit" className="h-11 w-full sm:w-auto" disabled={isSubmitting}>
                       {isSubmitting ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
@@ -669,7 +671,7 @@ export default function UploadPage() {
                 {/* Upload Progress */}
                 {isSubmitting && (
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
                       <span>Upload Progress</span>
                       <span>{uploadProgress}%</span>
                     </div>

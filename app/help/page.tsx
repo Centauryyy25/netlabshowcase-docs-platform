@@ -32,7 +32,7 @@ const faqs = [
 
 export default function HelpPage() {
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -48,16 +48,16 @@ export default function HelpPage() {
       </Breadcrumb>
 
       <Card className="border-border/50 bg-muted/10 backdrop-blur">
-        <CardHeader className="space-y-2">
-          <CardTitle className="flex items-center gap-2 text-3xl font-bold">
+        <CardHeader className="space-y-3 px-4 py-4 sm:space-y-4 sm:px-6 sm:py-6">
+          <CardTitle className="flex items-center gap-2 text-2xl font-bold sm:text-3xl">
             <HelpCircle className="size-7 text-primary" />
             Need assistance?
           </CardTitle>
-          <CardDescription className="text-base">
+          <CardDescription className="text-sm leading-relaxed sm:text-base">
             Find answers to common questions or reach out to the NetLabShowcase team for additional support.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-6 lg:grid-cols-[2fr,1fr]">
+        <CardContent className="grid gap-6 px-4 pb-5 pt-0 sm:px-6 lg:grid-cols-[2fr,1fr]">
           <div>
             <Accordion type="single" collapsible className="space-y-3">
               {faqs.map((faq, index) => (
@@ -77,16 +77,16 @@ export default function HelpPage() {
             </Accordion>
           </div>
           <div className="space-y-4 rounded-lg border border-primary/20 bg-primary/5 p-5">
-            <h2 className="text-lg font-semibold">Still stuck?</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-lg font-semibold sm:text-xl">Still stuck?</h2>
+            <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
               Our community moderators respond within 24 hours on weekdays. Choose the channel that works best for you.
             </p>
-            <Button asChild className="w-full">
+            <Button asChild className="h-11 w-full">
               <a href="mailto:hr@company.com?subject=NetLabShowcase%20Support%20Request">
                 Email Support
               </a>
             </Button>
-            <Button asChild variant="outline" className="w-full">
+            <Button asChild variant="outline" className="h-11 w-full">
               <a href="https://discord.gg/netlabshowcase" target="_blank" rel="noreferrer">
                 <MessageCircle className="mr-2 size-4" />
                 Join Discord

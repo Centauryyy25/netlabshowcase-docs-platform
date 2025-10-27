@@ -63,7 +63,7 @@ export default function MyLabsPage() {
   const isAuthenticated = useMemo(() => Boolean(session?.user), [session?.user])
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -78,46 +78,46 @@ export default function MyLabsPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">My Labs</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold sm:text-3xl">My Labs</h1>
+          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
             Review and manage every topology you have created for the community.
           </p>
         </div>
-        <Button asChild size="lg">
+        <Button asChild size="lg" className="h-11 w-full sm:w-auto">
           <Link href="/upload">Create New Lab</Link>
         </Button>
       </div>
 
       {isPending ? (
         <Card className="max-w-md">
-          <CardHeader>
+          <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
             <CardTitle>Loading your session</CardTitle>
             <CardDescription>Hang tight, we are verifying your account.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-2 px-4 pb-5 pt-0 sm:px-6">
             <Skeleton className="h-4 w-2/3" />
             <Skeleton className="h-4 w-1/2" />
           </CardContent>
         </Card>
       ) : !isAuthenticated ? (
         <Card className="max-w-lg">
-          <CardHeader>
+          <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
             <CardTitle>Sign in to view your labs</CardTitle>
             <CardDescription>Access private drafts and manage your published work.</CardDescription>
           </CardHeader>
-          <CardContent className="flex gap-3">
-            <Button asChild>
+          <CardContent className="flex flex-col gap-3 px-4 pb-5 pt-0 sm:flex-row sm:px-6">
+            <Button asChild className="h-11 w-full sm:w-auto">
               <Link href="/sign-in">Sign In</Link>
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
               <Link href="/sign-up">Create Account</Link>
             </Button>
           </CardContent>
         </Card>
       ) : loading ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <Card key={index} className="h-full">
               <Skeleton className="h-40 w-full" />
@@ -133,16 +133,16 @@ export default function MyLabsPage() {
           ))}
         </div>
       ) : labs.length === 0 ? (
-        <Card className="text-center py-12">
+        <Card className="py-12 text-center">
           <CardContent className="space-y-4">
             <div className="text-muted-foreground">You have not created any labs yet.</div>
-            <Button asChild>
+            <Button asChild className="h-11 w-full sm:w-auto">
               <Link href="/upload">Publish your first lab</Link>
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {labs.map((lab) => (
             <LabCard
               key={lab.id}
