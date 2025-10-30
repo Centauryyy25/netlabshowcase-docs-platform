@@ -11,6 +11,7 @@ import Shuffle from "@/components/ui/shadcn-io/shuffle/index";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MarqueeLabs, type LabPreview } from "@/components/ui/marquee-labs";
 import logo from "@/components/Asset/EtherDocs-Logo.png";
+import { LandingStats } from "@/components/landing/LandingStats";
 
 const navItems = [
   { label: "Documentation", href: "/resources" },
@@ -82,6 +83,7 @@ export function LandingPageContent({ labs }: LandingPageContentProps) {
         <LandingNav />
         <main className="flex flex-1 flex-col">
           <HeroSection labs={labs} />
+          <LandingStats />
         </main>
         <LandingFooter />
       </div>
@@ -181,7 +183,7 @@ function LandingNav() {
 
 function HeroSection({ labs }: { labs: LabPreview[] }) {
   return (
-    <section className="relative flex flex-col items-center justify-center px-6 pt-32 pb-24 text-center sm:px-8 lg:px-10 xl:px-0">
+    <section className="relative flex bg-[#080B16] flex-col items-center justify-center px-6 pt-32 pb-24 text-center sm:px-8 lg:px-10 xl:px-0">
 
       <motion.div
         className="mx-auto flex mt-28 mb-10 w-full max-w-6xl flex-col items-center"

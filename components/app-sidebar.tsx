@@ -34,6 +34,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import etherDocsLogo from "@/components/Asset/Icon-etherdocs.png"
 
 type MainNavigationItem = {
   title: string
@@ -131,12 +132,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ? {
         name: session.user.name || "User",
         email: session.user.email,
-        avatar: session.user.image || "/codeguide-logo.png",
+        avatar: session.user.image || etherDocsLogo.src,
       }
     : {
         name: "Guest",
         email: "guest@example.com",
-        avatar: "/codeguide-logo.png",
+        avatar: etherDocsLogo.src,
       }
 
   const activeCategory = pathname.startsWith("/dashboard") ? searchParams.get("category") : null
@@ -149,8 +150,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuItem>
               <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
                 <Link href="/">
-                  <Image src="/codeguide-logo.png" alt="CodeGuide" width={32} height={32} className="rounded-lg" />
-                  <span className="text-base font-semibold font-parkinsans">NetLabShowcase</span>
+                  <Image src={etherDocsLogo} alt="NetLabShowcase" width={32} height={32} className="rounded-lg" />
+                  <span className="text-base font-semibold font-parkinsans">EtherDocs Platform</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

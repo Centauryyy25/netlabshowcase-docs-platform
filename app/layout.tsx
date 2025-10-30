@@ -26,9 +26,9 @@ const parkinsans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Study Hub Networkers",
+  title: "Ether Docs Networkers",
   description:
-    "A modern Next.js starter with TypeScript, TailwindCSS, shadcn/ui, Better Auth, and Drizzle ORM",
+    "A modern web for documentation Labs Networkers",
 };
 
 export default function RootLayout({
