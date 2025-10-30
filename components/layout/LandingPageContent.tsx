@@ -182,13 +182,14 @@ function LandingNav() {
 function HeroSection({ labs }: { labs: LabPreview[] }) {
   return (
     <section className="relative flex flex-col items-center justify-center px-6 pt-32 pb-24 text-center sm:px-8 lg:px-10 xl:px-0">
+
       <motion.div
-        className="mx-auto flex mt-40 mb-10 w-full max-w-6xl flex-col items-center"
+        className="mx-auto flex mt-28 mb-10 w-full max-w-6xl flex-col items-center"
         initial="hidden"
         animate="visible"
         variants={heroVariants}
         transition={{ duration: 0.8, ease: "easeOut" }}
-      >
+        >
         <motion.span
           className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary"
           initial={{ opacity: 0, y: -12 }}
@@ -202,7 +203,7 @@ function HeroSection({ labs }: { labs: LabPreview[] }) {
           className="mt-6 text-shadow-sm max-w-4xl bg-gradient-to-r from-cyan-400 via-sky-300 to-violet-500 bg-clip-text text-4xl font-extrabold text-transparent sm:text-5xl md:text-6xl"
           variants={heroVariants}
           transition={{ delay: 0.45, duration: 0.8, ease: "easeOut" }}
-        >
+          >
           <Shuffle
             text="Explore. Document. Showcase."
             shuffleDirection="right"
@@ -220,7 +221,7 @@ function HeroSection({ labs }: { labs: LabPreview[] }) {
               fontSize: 'clamp(2rem, 8vw, 4rem)',
               fontFamily: 'inherit'
             }}
-          />
+            />
 
         </motion.h1>
 
@@ -228,7 +229,7 @@ function HeroSection({ labs }: { labs: LabPreview[] }) {
           className="mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg md:text-xl"
           variants={heroVariants}
           transition={{ delay: 0.55, duration: 0.8 }}
-        >
+          >
           Empowering Network Engineers through open labs, interactive documentation, and dynamic topology sharing.
         </motion.p>
 
@@ -236,58 +237,68 @@ function HeroSection({ labs }: { labs: LabPreview[] }) {
           className="mt-8 flex flex-col gap-4 sm:flex-row"
           variants={heroVariants}
           transition={{ delay: 0.7, duration: 0.8 }}
-        >
+          >
           <Button
             asChild
             className="rounded-xl bg-primary px-8 py-3 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/40 transition hover:bg-primary/90 hover:shadow-primary/50"
-          >
+            >
             <Link href="/dashboard">Explore Labs</Link>
           </Button>
           <Button
             asChild
             variant="outline"
             className="rounded-xl border-muted-foreground/40 px-8 py-3 text-base font-semibold text-muted-foreground hover:bg-muted/10"
-          >
+            >
             <Link href="/resources">View Documentation</Link>
           </Button>
         </motion.div>
       </motion.div>
-
-      <motion.section
-        className="mt-4 w-full "
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.25 }}
-        variants={{
-          hidden: {},
-          visible: {
-            transition: { staggerChildren: 0.15 },
-          },
-        }}
-      >
-        <div className="space-y-6">
-          {[
-            heroMarqueeRows[0],
-            heroMarqueeRows[1],
-            labs.length ? labs.slice(0, 6) : heroMarqueeRows[2],
-          ].map((row, rowIndex) => (
-            <motion.div
-              key={`hero-marquee-row-${rowIndex}`}
-              variants={fadeInUp}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="relative"
+      {/* <div className=""> */}
+        <motion.section
+          className="relative mt-4 w-full pb-24"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.25 }}
+          variants={{
+            hidden: {},
+            visible: {
+              transition: { staggerChildren: 0.15 },
+            },
+          }}
+          >
+          <div className="space-y-6">
+            {[
+              heroMarqueeRows[0],
+              heroMarqueeRows[1],
+              labs.length ? labs.slice(0, 6) : heroMarqueeRows[2],
+            ].map((row, rowIndex) => (
+              <motion.div
+                key={`hero-marquee-row-${rowIndex}`}
+                variants={fadeInUp}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="relative"
+                >
+                <MarqueeLabs
+                  labs={row}
+                  pauseOnHover
+                  direction={rowIndex % 2 === 0 ? "left" : "right"}
+                  speed="slow"
+                  />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16" />
+              </motion.div>
+            ))}
+          </div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-48 bg-gradient-to-t from-white via-white/92 to-transparent dark:from-[#080B16] dark:via-[#080B16]/96 dark:to-transparent backdrop-blur-[2px]" />
+          <div className="pointer-events-auto absolute bottom-6 left-1/2 z-20 -translate-x-1/2">
+            <Button
+              asChild
+              className="rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/40 transition hover:bg-primary/90 hover:shadow-primary/60"
             >
-              <MarqueeLabs
-                labs={row}
-                pauseOnHover
-                direction={rowIndex % 2 === 0 ? "left" : "right"}
-                speed="slow"
-              />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 " />
-            </motion.div>
-          ))}
-        </div>
-      </motion.section>
+              <Link href="/labs">View all Labs</Link>
+            </Button>
+          </div>
+        </motion.section>
+        {/* </div> */}
     </section>
   );
 }

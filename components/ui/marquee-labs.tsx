@@ -52,7 +52,7 @@ export function MarqueeLabs({
     return (
       <div
         className={cn(
-          "border border-cyan-200/40 bg-gradient-to-r from-cyan-100/60 via-sky-100/50 to-violet-100/60 p-10 text-center text-slate-700 shadow-[0_20px_55px_-18px_rgba(8,47,73,0.5)] dark:border-white/10 dark:from-background/40 dark:via-background/30 dark:to-background/40 dark:text-muted-foreground",
+          "border bg-amber-600 p-10 text-center text-slate-700 shadow-[0_20px_55px_-18px_rgba(8,47,73,0.5)] dark:border-white/10 dark:from-background/40 dark:via-background/30 dark:to-background/40 dark:text-muted-foreground",
           className,
         )}
       >
