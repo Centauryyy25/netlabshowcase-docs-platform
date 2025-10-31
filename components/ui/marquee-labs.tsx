@@ -36,6 +36,9 @@ const cardVariants = {
   animate: { opacity: 1, y: 0 },
 };
 
+const badgeBaseClasses =
+  "relative z-20 inline-flex items-center rounded-full border border-slate-300/70 bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-600 transition-colors duration-300 dark:border-white/12 dark:bg-white/5 dark:text-slate-200";
+
 export function MarqueeLabs({
   labs,
   direction = "left",
@@ -98,7 +101,12 @@ export function MarqueeLabs({
             className="group relative flex min-w-[240px] max-w-[260px] flex-col items-start justify-center gap-2 rounded-2xl border border-border/60 bg-card p-4 text-left shadow-[0_15px_40px_-22px_rgba(15,23,42,0.45)] transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_45px_rgba(56,189,248,0.25)] dark:border-white/10 dark:bg-muted/20 dark:hover:shadow-[0_0_35px_rgba(56,189,248,0.25)]"
           >
             <Link href={`/labs/${lab.id}`} className="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label={`View lab ${lab.title}`} />
-            <span className="relative z-20 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary dark:bg-primary/20">
+            <span
+              className={cn(
+                badgeBaseClasses,
+                "group-hover:border-violet-400/90 group-hover:bg-violet-500/10 group-hover:text-violet-600 group-hover:shadow-[0_0_18px_rgba(139,92,246,0.25)] dark:group-hover:text-violet-200 dark:group-hover:shadow-[0_0_18px_rgba(139,92,246,0.35)]",
+              )}
+            >
               {lab.category ?? "Uncategorized"}
             </span>
             <h3 className="relative z-20 line-clamp-2 text-base font-semibold text-foreground">

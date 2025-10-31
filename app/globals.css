@@ -48,37 +48,44 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --background: #f9fafb;
+  --foreground: #0f172a;
+  --card: rgba(255, 255, 255, 0.88);
+  --card-foreground: #0f172a;
+  --popover: rgba(255, 255, 255, 0.95);
+  --popover-foreground: #0f172a;
+  --primary: #bf42f5;
+  --primary-foreground: #faf5ff;
+  --secondary: rgba(44, 106, 165, 0.12);
+  --particle-color: #bf42f5; /* Light mode */
+  --secondary-foreground: #1f4c74;
+  --muted: rgba(15, 23, 42, 0.04);
+  --muted-foreground: #475569;
+  --accent: rgba(191, 66, 245, 0.12);
+  --accent-foreground: #7623a4;
+  --destructive: #ef4444;
+  --border: rgba(15, 23, 42, 0.12);
+  --input: rgba(15, 23, 42, 0.12);
+  --ring: rgba(191, 66, 245, 0.35);
+  --chart-1: #bf42f5;
+  --chart-2: #2c6aa5;
+  --chart-3: #22c55e;
+  --chart-4: #facc15;
+  --chart-5: #6366f1;
+  --sidebar: rgba(255, 255, 255, 0.88);
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #bf42f5;
+  --sidebar-primary-foreground: #faf5ff;
+  --sidebar-accent: rgba(44, 106, 165, 0.12);
+  --sidebar-accent-foreground: #1f4c74;
+  --sidebar-border: rgba(15, 23, 42, 0.12);
+  --sidebar-ring: rgba(191, 66, 245, 0.35);
+  --surface-bg: #f3f4f6;
+  --surface-card: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(243, 244, 246, 0.92) 100%);
+  --surface-card-alt: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 242, 245, 0.92) 100%);
+  --surface-highlight: linear-gradient(145deg, rgba(191, 66, 245, 0.08) 0%, rgba(44, 106, 165, 0.06) 100%);
+  --surface-bg-light: #f9fafb;
+  --surface-card-light: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(240, 243, 255, 0.92));
 }
 
 .dark {
@@ -98,6 +105,7 @@
   --accent-foreground: oklch(0.984 0.003 247.858);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
+  --particle-color: #bf42f5; /* Dark mode */
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.551 0.027 264.364);
   --chart-1: oklch(0.488 0.243 264.376);
@@ -113,6 +121,46 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+}
+
+.section-wrapper {
+  @apply relative mx-auto w-full max-w-7xl px-6 py-20 sm:px-8 lg:px-10;
+}
+
+/* ---- Surface Cards ---- */
+.surface-card {
+  background: var(--surface-card);
+  @apply rounded-[24px] border border-white/10 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.6)] transition duration-300 hover:-translate-y-1;
+}
+
+.surface-card-alt {
+  background: var(--surface-card-alt);
+  @apply rounded-[24px] border border-white/10 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.5)] transition duration-300 hover:-translate-y-1;
+}
+
+/* ---- Headings ---- */
+.section-heading {
+  @apply text-3xl font-bold text-white tracking-tight;
+}
+
+.section-sub {
+  @apply text-sm text-slate-400;
+}
+
+/* ---- Glow / Gradient Utilities ---- */
+.bg-glow-cyan {
+  background: radial-gradient(circle at 30% 50%, rgba(56,189,248,0.1), transparent 70%);
+}
+.bg-glow-purple {
+  background: radial-gradient(circle at 70% 50%, rgba(147,51,234,0.12), transparent 70%);
+}
+
+/* ---- Universal Shadows ---- */
+.shadow-primary {
+  @apply shadow-[0_12px_48px_-18px_rgba(59,130,246,0.6)];
+}
+.shadow-surface {
+  @apply shadow-[0_10px_36px_-20px_rgba(0,0,0,0.4)];
 }
 
 @layer base {

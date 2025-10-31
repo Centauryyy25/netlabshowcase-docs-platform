@@ -10,14 +10,17 @@ const stats = [
 
 export function LandingStats() {
   return (
-    <section className="relative overflow-hidden py-20 lg:py-28">
-      <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#080B16]/60 via-[#080B16]/95 to-[#0a0f1f]" />
+    <section className="relative h-96 md:py-10 md:mb-20 lg:py-28">
+      {/* Base gradient background */}
+      <div className="absolute inset-0 -z-20 bg-gradient-to-t from-white via-white/80 to-transparent dark:from-[#080B16]/60 dark:via-[#080B16]/95 dark:to-transparent" />
 
-      <div className="absolute inset-0 -z-10 opacity-60 [mask-image:radial-gradient(circle_at_center,white,transparent_75%)]">
+      {/* Radial mask lighting effect */}
+      {/* <div className="absolute inset-0 -z-10 opacity-60 [mask-image:radial-gradient(circle_at_center,white,transparent_75%)]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(101,117,255,0.18)_0%,_rgba(8,11,22,0.05)_45%,_rgba(8,11,22,0.9)_100%)]" />
-      </div>
+      </div> */}
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 text-center text-white">
+      {/* Stats content */}
+      <div className="relative z-10 mx-auto max-w-6xl px-6 text-center text-gray-900 dark:text-white transition-colors duration-300">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -35,10 +38,10 @@ export function LandingStats() {
               transition={{ duration: 0.6, ease: "easeOut" }}
               className="group flex flex-col items-center space-y-3"
             >
-              <span className="relative font-extrabold text-4xl tracking-tight drop-shadow-sm transition duration-300 group-hover:text-indigo-400 group-hover:drop-shadow-[0_0_20px_rgba(99,102,241,0.35)] lg:text-5xl">
+              <span className="relative font-extrabold text-4xl tracking-tight drop-shadow-sm transition duration-300 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 group-hover:drop-shadow-[0_0_20px_rgba(99,102,241,0.35)] lg:text-5xl">
                 {item.value}
               </span>
-              <span className="text-sm font-medium text-gray-400 transition-colors duration-300 group-hover:text-gray-300">
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400 transition-colors duration-300 group-hover:text-gray-700 dark:group-hover:text-gray-300">
                 {item.label}
               </span>
             </motion.div>
@@ -46,8 +49,8 @@ export function LandingStats() {
         </motion.div>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-[#080B16]/95 via-[#080B16]/60 to-transparent z-0" />
-
-     </section>
+      {/* Top overlay gradient for both modes */}
+    <div className="pointer-events-none absolute inset-x-0 top-0 h-48 z-0 bg-gradient-to-b dark:bg-gradient-to-b  from-neutral-50/95 via-white/85 to-transparent dark:from-[#080B16] dark:via-[#080B16]/60 dark:to-transparent transition-colors duration-500" />    
+  </section>
   );
 }
