@@ -233,14 +233,14 @@ function HeroSection({ labs }: { labs: LabPreview[] }) {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.24)_0%,_rgba(14,23,45,0.85)_65%,_rgba(8,11,22,1)_100%)]" />
       </div> */}
       <motion.div
-        className="mx-auto lg:mt-28 mt-2 mb-10 flex w-full max-w-6xl flex-col items-center"
+        className="mx-auto lg:mt-28 mt-2 mb-10 will-change-transform flex w-full max-w-6xl flex-col items-center"
         initial="hidden"
         animate="visible"
         variants={heroVariants}
         transition={{ duration: 0.8, ease: "easeOut" }}
         >
         <motion.span
-          className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary"
+          className="inline-flex items-center gap-2 will-change-transform rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary"
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
@@ -249,7 +249,7 @@ function HeroSection({ labs }: { labs: LabPreview[] }) {
         </motion.span>
 
         <motion.h1
-          className="text-shadow-sm mt-6 max-w-4xl bg-gradient-to-r from-brand-base via-[#6e8df2] to-brand-secondary bg-clip-text text-4xl font-extrabold text-transparent sm:text-5xl md:text-6xl"
+          className="text-shadow-sm mt-6 max-w-4xl will-change-transform bg-gradient-to-r from-brand-base via-[#6e8df2] to-brand-secondary bg-clip-text text-4xl font-extrabold text-transparent sm:text-5xl md:text-6xl"
           variants={heroVariants}
           transition={{ delay: 0.45, duration: 0.8, ease: "easeOut" }}
           >
@@ -275,7 +275,7 @@ function HeroSection({ labs }: { labs: LabPreview[] }) {
         </motion.h1>
 
         <motion.p
-          className="mt-6 max-w-2xl text-base text-slate-600 sm:text-lg md:text-xl dark:text-muted-foreground"
+          className="mt-6 max-w-2xl text-base will-change-transform text-slate-600 sm:text-lg md:text-xl dark:text-muted-foreground"
           variants={heroVariants}
           transition={{ delay: 0.55, duration: 0.8 }}
           >
@@ -283,7 +283,7 @@ function HeroSection({ labs }: { labs: LabPreview[] }) {
         </motion.p>
 
         <motion.div
-          className="mt-8 flex flex-col gap-4 sm:flex-row"
+          className="mt-8 flex flex-col will-change-transform gap-4 sm:flex-row"
           variants={heroVariants}
           transition={{ delay: 0.7, duration: 0.8 }}
           >
@@ -304,7 +304,7 @@ function HeroSection({ labs }: { labs: LabPreview[] }) {
       </motion.div>
       {/* <div className=""> */}
         <motion.section
-          className="relative mt-4 w-full pb-24"
+          className="relative mt-4 will-change-transform w-full pb-24"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.25 }}
@@ -325,7 +325,7 @@ function HeroSection({ labs }: { labs: LabPreview[] }) {
                 key={`hero-marquee-row-${rowIndex}`}
                 variants={fadeInUp}
                 transition={{ duration: 0.6, ease: "easeOut" }}
-                className="relative"
+                className="relative will-change-transform"
                 >
                 <MarqueeLabs
                   labs={row}
@@ -371,7 +371,7 @@ function LandingShowcase({ latestLabs }: { latestLabs: LatestLabCard[] }) {
       <div className="pointer-events-none absolute w-full inset-x-0 bottom-0 z-10 h-80 bg-gradient-to-b transition-all duration-700 dark:via-[#080B16]/60 dark:to-[#080B16]" />
 
       <motion.div
-        className="relative overflow-hidden rounded-[26px] border border-slate-200/70 bg-[linear-gradient(140deg,rgba(255,255,255,0.94)_0%,rgba(243,244,246,0.9)_100%)] px-8 py-10 shadow-brand-soft dark:border-white/10 dark:bg-[linear-gradient(140deg,rgba(19,24,42,0.95)_0%,rgba(12,16,28,0.92)_45%,rgba(9,11,21,0.97)_100%)] dark:shadow-[0_18px_55px_-32px_rgba(15,23,42,0.6)]"
+        className="relative overflow-hidden will-change-transform rounded-[26px] border border-slate-200/70 bg-[linear-gradient(140deg,rgba(255,255,255,0.94)_0%,rgba(243,244,246,0.9)_100%)] px-8 py-10 shadow-brand-soft dark:border-white/10 dark:bg-[linear-gradient(140deg,rgba(19,24,42,0.95)_0%,rgba(12,16,28,0.92)_45%,rgba(9,11,21,0.97)_100%)] dark:shadow-[0_18px_55px_-32px_rgba(15,23,42,0.6)]"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.35 }}
@@ -404,14 +404,14 @@ function LandingShowcase({ latestLabs }: { latestLabs: LatestLabCard[] }) {
       </motion.div>
 
       <motion.div
-        className="mt-8 ls:mt-2 lg:md-2 px-2 grid lg:gap-2 gap-6 md:grid-cols-2"
+        className="mt-8 ls:mt-2 will-change-transform lg:md-2 px-2 grid lg:gap-2 gap-6 md:grid-cols-2"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.25 }}
         variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.18 } } }}
       >
         <motion.article
-          className="relative h-84 overflow-hidden rounded-[28px] border border-slate-200/80 bg-[linear-gradient(150deg,rgba(255,255,255,0.94)_0%,rgba(243,244,246,0.88)_100%)] p-[1px] shadow-brand-soft transition duration-300 hover:-translate-y-1 dark:border-white/10 dark:bg-[linear-gradient(150deg,rgba(17,24,39,0.94)_0%,rgba(24,32,52,0.9)_55%,rgba(16,21,35,0.96)_100%)] dark:shadow-[0_18px_60px_-32px_rgba(17,24,39,0.6)]"
+          className="relative h-84 will-change-transform overflow-hidden rounded-[28px] border border-slate-200/80 bg-[linear-gradient(150deg,rgba(255,255,255,0.94)_0%,rgba(243,244,246,0.88)_100%)] p-[1px] shadow-brand-soft transition duration-300 hover:-translate-y-1 dark:border-white/10 dark:bg-[linear-gradient(150deg,rgba(17,24,39,0.94)_0%,rgba(24,32,52,0.9)_55%,rgba(16,21,35,0.96)_100%)] dark:shadow-[0_18px_60px_-32px_rgba(17,24,39,0.6)]"
           variants={showcaseCard}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
@@ -446,7 +446,7 @@ function LandingShowcase({ latestLabs }: { latestLabs: LatestLabCard[] }) {
         </motion.article>
 
         <motion.article
-          className="relative h-84 overflow-hidden rounded-[28px] border border-slate-200/80 bg-[linear-gradient(150deg,rgba(255,255,255,0.95)_0%,rgba(245,243,255,0.9)_100%)] p-[1px] shadow-brand-soft transition duration-300 hover:-translate-y-1 dark:border-white/10 dark:bg-[linear-gradient(150deg,rgba(26,19,47,0.95)_0%,rgba(35,22,64,0.9)_55%,rgba(25,18,49,0.95)_100%)] dark:shadow-[0_18px_60px_-34px_rgba(76,29,149,0.6)]"
+          className="relative h-84 will-change-transform overflow-hidden rounded-[28px] border border-slate-200/80 bg-[linear-gradient(150deg,rgba(255,255,255,0.95)_0%,rgba(245,243,255,0.9)_100%)] p-[1px] shadow-brand-soft transition duration-300 hover:-translate-y-1 dark:border-white/10 dark:bg-[linear-gradient(150deg,rgba(26,19,47,0.95)_0%,rgba(35,22,64,0.9)_55%,rgba(25,18,49,0.95)_100%)] dark:shadow-[0_18px_60px_-34px_rgba(76,29,149,0.6)]"
           variants={showcaseCard}
           transition={{ duration: 0.6, ease: "easeOut", delay: 0.08 }}
         >
@@ -483,14 +483,14 @@ function LandingShowcase({ latestLabs }: { latestLabs: LatestLabCard[] }) {
       </motion.div>
 
       <motion.div
-        className="mt-8 ls:mt-2 lg:md-2 px-2 grid lg:gap-2 gap-6 md:grid-cols-2"
+        className="mt-8 will-change-transform ls:mt-2 lg:md-2 px-2 grid lg:gap-2 gap-6 md:grid-cols-2"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.25 }}
         variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.18 } } }}
       >
         <motion.article
-          className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-[linear-gradient(150deg,rgba(255,255,255,0.94)_0%,rgba(243,244,246,0.9)_100%)] p-[1px] shadow-brand-soft transition duration-300 hover:-translate-y-1 dark:border-white/10 dark:bg-[linear-gradient(150deg,rgba(21,27,43,0.96)_0%,rgba(30,40,62,0.9)_55%,rgba(18,24,44,0.95)_100%)] dark:shadow-[0_18px_60px_-34px_rgba(15,23,42,0.58)]"
+          className="relative will-change-transform overflow-hidden rounded-[28px] border border-slate-200/80 bg-[linear-gradient(150deg,rgba(255,255,255,0.94)_0%,rgba(243,244,246,0.9)_100%)] p-[1px] shadow-brand-soft transition duration-300 hover:-translate-y-1 dark:border-white/10 dark:bg-[linear-gradient(150deg,rgba(21,27,43,0.96)_0%,rgba(30,40,62,0.9)_55%,rgba(18,24,44,0.95)_100%)] dark:shadow-[0_18px_60px_-34px_rgba(15,23,42,0.58)]"
           variants={showcaseCard}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
@@ -520,7 +520,7 @@ function LandingShowcase({ latestLabs }: { latestLabs: LatestLabCard[] }) {
         </motion.article>
 
         <motion.article
-          className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-[linear-gradient(150deg,rgba(255,255,255,0.95)_0%,rgba(243,244,246,0.9)_100%)] p-[1px] shadow-brand-soft transition duration-300 hover:-translate-y-1 dark:border-white/10 dark:bg-[linear-gradient(150deg,rgba(19,32,48,0.94)_0%,rgba(15,23,42,0.94)_55%,rgba(10,15,28,0.98)_100%)] dark:shadow-[0_18px_60px_-34px_rgba(21,94,117,0.55)]"
+          className="relative will-change-transform overflow-hidden rounded-[28px] border border-slate-200/80 bg-[linear-gradient(150deg,rgba(255,255,255,0.95)_0%,rgba(243,244,246,0.9)_100%)] p-[1px] shadow-brand-soft transition duration-300 hover:-translate-y-1 dark:border-white/10 dark:bg-[linear-gradient(150deg,rgba(19,32,48,0.94)_0%,rgba(15,23,42,0.94)_55%,rgba(10,15,28,0.98)_100%)] dark:shadow-[0_18px_60px_-34px_rgba(21,94,117,0.55)]"
           variants={showcaseCard}
           transition={{ duration: 0.6, ease: "easeOut", delay: 0.08 }}
         >
@@ -542,12 +542,12 @@ function LandingShowcase({ latestLabs }: { latestLabs: LatestLabCard[] }) {
               </Button>
             </div>
 
-            <motion.div className="mt-5 grid gap-3 sm:grid-cols-3" variants={latestLabGrid}>
+            <motion.div className="mt-5 will-change-transform grid gap-3 sm:grid-cols-3" variants={latestLabGrid}>
               {labsToRender.map((lab) => (
                 <motion.div
                   key={lab.id}
                   variants={latestLabItem}
-                  className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-200/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.95)_0%,rgba(243,244,246,0.9)_100%)] p-4 transition duration-300 hover:-translate-y-1 hover:border-brand-base/30 dark:border-white/12 dark:bg-[linear-gradient(145deg,rgba(26,33,52,0.88)_0%,rgba(17,24,39,0.95)_55%,rgba(15,23,42,1)_100%)] dark:hover:border-white/18"
+                  className="group relative will-change-transform flex h-full flex-col overflow-hidden rounded-xl border border-slate-200/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.95)_0%,rgba(243,244,246,0.9)_100%)] p-4 transition duration-300 hover:-translate-y-1 hover:border-brand-base/30 dark:border-white/12 dark:bg-[linear-gradient(145deg,rgba(26,33,52,0.88)_0%,rgba(17,24,39,0.95)_55%,rgba(15,23,42,1)_100%)] dark:hover:border-white/18"
                 >
                   <Link href={`/labs/${lab.id}`} className="flex h-full flex-col gap-3">
                     <div className="flex items-center gap-3">
