@@ -357,14 +357,14 @@ function LandingShowcase({ latestLabs }: { latestLabs: LatestLabCard[] }) {
 
   return (
     
-    <section className="relative z-10 mx-auto mt-12  w-full max-w-6xl px-4 pb-20 text-slate-900 sm:px-6 lg:px-8 dark:text-white">
+    <section className="relative z-10 mx-auto mt-12 mr-72  w-full max-w-6xl px-1 pb-20 text-slate-900 sm:px-6 lg:px-8 dark:text-white">
       <div className="absolute rounded-2xl inset-0 w-full -z-10 scale-105 blur-[80px] opacity-75 [mask-image:linear-gradient(to_bottom,rgba(255,255,255,1)_65%,transparent_100%)]">
-        {/* <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(191,66,245,0.2)_0%,_rgba(44,106,165,0.12)_45%,_rgba(255,255,255,0.08)_100%)] dark:bg-[radial-gradient(ellipse_at_top,_rgba(101,117,255,0.22)_0%,_rgba(8,11,22,0.4)_55%,_rgba(8,11,22,1)_100%)]" /> */}
+        <div className="absolute inset-0 mt-64 bg-[radial-gradient(ellipse_at_top,_rgba(191,66,245,0.2)_0%,_rgba(44,106,165,0.12)_45%,_rgba(255,255,255,0.08)_100%)] dark:bg-[radial-gradient(ellipse_at_top,_rgba(101,117,255,0.22)_0%,_rgba(8,11,22,0.4)_55%,_rgba(8,11,22,1)_100%)]" />
       </div>
 
     {/* Main glow effect - softer and more spread */}
-        <div className="absolute rounded-2xl inset-0 -z-10 scale-105 w-full opacity-60 [mask-image:linear-gradient(to_bottom,rgba(255,255,255,1)_52%,transparent_100%)]">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(191,66,245,0.18)_0%,_rgba(44,106,165,0.08)_45%,_rgba(255,255,255,0.65)_100%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.18)_0%,rgba(8,11,22,0.8)_45%,rgba(5,8,17,1)_100%)]" />
+        <div className="absolute  rounded-2xl inset-0 -z-10 scale-105 w-full opacity-60 [mask-image:linear-gradient(to_bottom,rgba(255,255,255,1)_52%,transparent_100%)]">
+          {/* <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(191,66,245,0.18)_0%,_rgba(44,106,165,0.08)_45%,_rgba(255,255,255,0.65)_100%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.18)_0%,rgba(8,11,22,0.8)_45%,rgba(5,8,17,1)_100%)]" /> */}
         </div>
 
       {/* Bottom fade - smooth transition to LandingStats */}
@@ -404,7 +404,7 @@ function LandingShowcase({ latestLabs }: { latestLabs: LatestLabCard[] }) {
       </motion.div>
 
       <motion.div
-        className="mt-10 grid gap-6 md:grid-cols-2"
+        className="mt-8 ls:mt-2 lg:md-2 px-2 grid lg:gap-2 gap-6 md:grid-cols-2"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.25 }}
@@ -483,7 +483,7 @@ function LandingShowcase({ latestLabs }: { latestLabs: LatestLabCard[] }) {
       </motion.div>
 
       <motion.div
-        className="mt-8 grid gap-6 md:grid-cols-2"
+        className="mt-8 ls:mt-2 lg:md-2 px-2 grid lg:gap-2 gap-6 md:grid-cols-2"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.25 }}

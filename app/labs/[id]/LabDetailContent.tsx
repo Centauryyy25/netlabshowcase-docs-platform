@@ -543,6 +543,7 @@ export default function LabDetailContent() {
                         alt={`${lab.title} topology diagram`}
                         fill
                         className="object-none "
+                        loading="lazy"
                         sizes="(max-width: 1024px) 100vw, 66vw"
                         onLoad={() => setImageLoading(false)}
                         onError={() => setImageError(true)}
