@@ -233,7 +233,7 @@ function HeroSection({ labs }: { labs: LabPreview[] }) {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.24)_0%,_rgba(14,23,45,0.85)_65%,_rgba(8,11,22,1)_100%)]" />
       </div> */}
       <motion.div
-        className="mx-auto mt-28 mb-10 flex w-full max-w-6xl flex-col items-center"
+        className="mx-auto lg:mt-28 mt-2 mb-10 flex w-full max-w-6xl flex-col items-center"
         initial="hidden"
         animate="visible"
         variants={heroVariants}
