@@ -84,8 +84,8 @@ const documentNavigation: DocumentNavigationItem[] = [
     hasActions: true,
   },
   {
-    name: "Wireless Labs",
-    url: "/dashboard?category=Wireless",
+    name: "Ai Asistent Lab",
+    url: "/ai-chat",
     icon: IconDeviceDesktop,
     categoryParam: "Wireless",
     hasActions: true,

@@ -89,6 +89,8 @@ const externalLinks: readonly ExternalResource[] = [
 
 export default function ResourcesPage() {
   return (
+    <div className="w-full bg-white dark:bg-[#020618]">
+
     <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
       <Breadcrumb>
         <BreadcrumbList>
@@ -202,6 +204,7 @@ export default function ResourcesPage() {
           ))}
         </TabsContent>
       </Tabs>
+    </div>
     </div>
   )
 }

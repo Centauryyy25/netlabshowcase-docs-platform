@@ -49,7 +49,7 @@ export default function AiChatContent() {
   }, [fetchLabData])
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="container mx-auto py-8 space-y-6 bg-white dark:bg-[#020618]">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="mb-2 flex items-center gap-2">

@@ -68,64 +68,67 @@ const categories: CategoryItem[] = [
 
 export default function CategoriesPage() {
   return (
-    <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/dashboard">Dashboard</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Categories</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+    <div className="w-full h-full bg-white dark:bg-[#020618]">
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold sm:text-3xl">Browse by Category</h1>
-          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Jump straight into the topics that match your current study plan or classroom focus.
-          </p>
+      <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href="/dashboard">Dashboard</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Categories</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold sm:text-3xl">Browse by Category</h1>
+            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Jump straight into the topics that match your current study plan or classroom focus.
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3">
-        {categories.map((category) => (
-          <Card
-            key={category.name}
-            className={`border ${category.color} bg-gradient-to-br transition hover:shadow-lg`}
-          >
-            <CardHeader className="flex flex-col items-start gap-4 px-4 py-4 sm:flex-row sm:justify-between sm:px-6 sm:py-6">
-              <div className="space-y-1.5">
-                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                  <category.icon className="size-5 shrink-0" />
-                  {category.name}
-                </CardTitle>
-                <CardDescription className="text-sm leading-relaxed sm:text-base">
-                  {category.description}
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4 px-4 pb-5 pt-0 sm:px-6">
-              <div className="flex flex-wrap gap-2">
-                {category.tags.map((tag) => (
-                  <Badge key={tag} variant="outline" className="border-current/40 text-xs sm:text-sm">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-              <Link
-                href={category.url}
-                className="inline-flex items-center text-sm font-medium text-primary hover:underline sm:text-base"
-              >
-                View labs in {category.name}
-              </Link>
-            </CardContent>
-          </Card>
-        ))}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3">
+          {categories.map((category) => (
+            <Card
+              key={category.name}
+              className={`border ${category.color} bg-gradient-to-br transition hover:shadow-lg`}
+            >
+              <CardHeader className="flex flex-col items-start gap-4 px-4 py-4 sm:flex-row sm:justify-between sm:px-6 sm:py-6">
+                <div className="space-y-1.5">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <category.icon className="size-5 shrink-0" />
+                    {category.name}
+                  </CardTitle>
+                  <CardDescription className="text-sm leading-relaxed sm:text-base">
+                    {category.description}
+                  </CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 px-4 pb-5 pt-0 sm:px-6">
+                <div className="flex flex-wrap gap-2">
+                  {category.tags.map((tag) => (
+                    <Badge key={tag} variant="outline" className="border-current/40 text-xs sm:text-sm">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+                <Link
+                  href={category.url}
+                  className="inline-flex items-center text-sm font-medium text-primary hover:underline sm:text-base"
+                >
+                  View labs in {category.name}
+                </Link>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   )

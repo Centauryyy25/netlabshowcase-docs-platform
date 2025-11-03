@@ -32,6 +32,7 @@ import {
   Shield,
   Cloud,
   Phone,
+  Radio,
   Building,
   BookOpen,
   Pencil,
@@ -102,17 +103,20 @@ const categoryIcons = {
   Switching: Settings,
   Security: Shield,
   MPLS: Cloud,
-  Wireless: Phone,
+  Wireless: Radio,
   Voice: Phone,
   'Data Center': Building,
   Other: BookOpen,
 };
 
 const difficultyColors = {
-  Beginner: 'bg-green-100 text-green-800 hover:bg-green-200',
-  Intermediate: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
-  Advanced: 'bg-red-100 text-red-800 hover:bg-red-200',
+  Beginner: 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-200 dark:hover:bg-emerald-500/30',
+  Intermediate: 'bg-sky-100 text-sky-800 hover:bg-sky-200 dark:bg-sky-500/20 dark:text-sky-200 dark:hover:bg-sky-500/30',
+  Advanced: 'bg-rose-100 text-rose-800 hover:bg-rose-200 dark:bg-rose-500/20 dark:text-rose-200 dark:hover:bg-rose-500/30',
 };
+
+const surfaceCardStyles =
+  'border border-slate-200/70 bg-white/95 shadow-sm backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/60';
 
 const getFileIcon = (fileType: string) => {
   if (fileType.startsWith('image/')) return ImageIcon;
@@ -412,8 +416,8 @@ export default function LabDetailContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050f24] text-foreground">
-        <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
+      <div className="min-h-screen bg-[#F9FAFB] text-gray-900 dark:bg-[#050f24] dark:text-slate-100">
+        <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
           <div className="space-y-4 animate-pulse">
             <div className="h-8 w-64 rounded bg-slate-800/60"></div>
             <div className="h-64 rounded bg-slate-800/60"></div>
@@ -435,13 +439,13 @@ export default function LabDetailContent() {
 
   if (!labData) {
     return (
-      <div className="min-h-screen bg-[#050f24] text-foreground">
-        <div className="container mx-auto px-4 py-8 text-center sm:px-6">
-          <h1 className="mb-4 text-2xl font-bold">Lab not found</h1>
-          <p className="mb-6 text-muted-foreground">
+      <div className="min-h-screen bg-white text-gray-900 dark:bg-[#050f24] dark:text-slate-100">
+        <div className="mx-auto w-full max-w-6xl px-4 py-8 text-center sm:px-6 lg:px-8">
+          <h1 className="mb-4 text-2xl font-bold text-gray-900 dark:text-white">Lab not found</h1>
+          <p className="mb-6 text-sm leading-relaxed text-gray-600 dark:text-slate-300">
             The lab you&rsquo;re looking for doesn&rsquo;t exist or has been removed.
           </p>
-          <Button asChild className="h-11 w-full sm:w-auto">
+          <Button asChild className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 sm:w-auto dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800">
             <Link href="/dashboard">Back to Dashboard</Link>
           </Button>
         </div>
@@ -456,8 +460,8 @@ export default function LabDetailContent() {
     : 'Just now';
 
   return (
-    <div className="min-h-screen bg-[#050f24] text-foreground">
-      <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
+    <div className="min-h-screen bg-[#F9FAFB] text-gray-900 dark:bg-[#050f24] dark:text-slate-100">
+      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       {/* Breadcrumb Navigation */}
       <Breadcrumb>
         <BreadcrumbList>
@@ -476,40 +480,46 @@ export default function LabDetailContent() {
       </Breadcrumb>
 
       {/* Lab Header */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="space-y-4 rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/60">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              {CategoryIcon && <CategoryIcon className="h-5 w-5" />}
-              <Badge variant="outline">{lab.category}</Badge>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+              {CategoryIcon && <CategoryIcon className="h-5 w-5 text-sky-500 dark:text-sky-300" />}
+              <Badge variant="outline" className="border-slate-200/70 bg-white/80 text-slate-900 dark:border-slate-700/60 dark:bg-slate-900/60 dark:text-slate-100">
+                {lab.category}
+              </Badge>
               <Badge className={difficultyColors[lab.difficulty]}>
                 {lab.difficulty}
               </Badge>
             </div>
-            <h1 className="text-2xl font-bold sm:text-3xl">{lab.title}</h1>
+            <h1 className="text-3xl font-semibold text-gray-900 dark:text-white sm:text-4xl">{lab.title}</h1>
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-            <Button variant="outline" size="sm" className="h-11 w-full sm:w-auto" onClick={handleShare}>
-              <Share2 className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="sm" className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 sm:w-auto dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800" onClick={handleShare}>
+              <Share2 className="mr-2 h-4 w-4" />
               Share
             </Button>
-            <Button asChild variant="outline" size="sm" className="h-11 w-full sm:w-auto">
+            <Button asChild variant="outline" size="sm" className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 sm:w-auto dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800">
               <Link href="/dashboard">
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Labs
               </Link>
             </Button>
           </div>
         </div>
 
-        <p className="max-w-4xl text-base leading-relaxed text-muted-foreground sm:text-lg">{lab.description}</p>
+        <p className="max-w-4xl text-base leading-relaxed text-gray-700 dark:text-slate-300 sm:text-lg">{lab.description}</p>
 
         {/* Tags */}
         {lab.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 pt-2">
             {lab.tags.map((tag, index) => (
-              <Badge key={index} variant="secondary" className="text-xs sm:text-sm">
+              <Badge
+                key={index}
+                variant="secondary"
+                className="bg-slate-100 text-xs text-slate-700 dark:bg-slate-800/70 dark:text-slate-200 sm:text-sm"
+              >
                 {tag}
               </Badge>
             ))}
@@ -521,20 +531,20 @@ export default function LabDetailContent() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Topology Image */}
-          <Card>
+          <Card className={surfaceCardStyles}>
             <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
-              <CardTitle className="flex items-center gap-2">
-                <ImageIcon className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                <ImageIcon className="h-5 w-5 text-sky-500 dark:text-sky-300" />
                 Network Topology
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 py-4 sm:px-6 sm:py-6">
-              <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
+              <div className="relative aspect-video overflow-hidden rounded-xl border border-slate-200/70 bg-slate-100 dark:border-slate-800/60 dark:bg-slate-900/60">
                 {lab.topologyImageUrl && !imageError ? (
                   <>
                     {imageLoading && (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+                        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-sky-500 dark:border-slate-700 dark:border-t-sky-300"></div>
                       </div>
                     )}
                     <ImageZoom className="h-full w-full">
@@ -542,7 +552,7 @@ export default function LabDetailContent() {
                         src={lab.topologyImageUrl}
                         alt={`${lab.title} topology diagram`}
                         fill
-                        className="object-none "
+                        className="object-contain"
                         loading="lazy"
                         sizes="(max-width: 1024px) 100vw, 66vw"
                         onLoad={() => setImageLoading(false)}
@@ -553,8 +563,8 @@ export default function LabDetailContent() {
                 ) : (
                   <div className="flex h-full items-center justify-center">
                     <div className="space-y-2 text-center">
-                      <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-                      <p className="text-muted-foreground">No topology image available</p>
+                      <ImageIcon className="mx-auto h-12 w-12 text-slate-400 dark:text-slate-500" />
+                      <p className="text-sm text-gray-600 dark:text-slate-300">No topology image available</p>
                     </div>
                   </div>
                 )}
@@ -571,7 +581,7 @@ export default function LabDetailContent() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-10 w-full sm:w-auto"
+                      className="h-10 w-full border-slate-200/80 bg-white/90 text-slate-600 hover:bg-slate-100 sm:w-auto dark:border-slate-700/60 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-800"
                       onClick={() => document.getElementById('topology-file')?.click()}
                       disabled={isUploading}
                     >
@@ -585,8 +595,8 @@ export default function LabDetailContent() {
               <div className="space-y-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h2 className="text-xl font-semibold">Detailed Notes</h2>
-                    <p className="text-xs text-muted-foreground">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Detailed Notes</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                       Last updated {lastUpdatedLabel}
                     </p>
                   </div>
@@ -627,11 +637,11 @@ export default function LabDetailContent() {
                   />
                 ) : lab.labNotes ? (
                   <div
-                    className="prose dark:prose-invert max-w-none rounded-xl border border-white/5 bg-white/5 p-4 backdrop-blur sm:p-6"
+                    className="prose prose-slate max-w-none rounded-xl border border-slate-200/70 bg-white/95 p-4 shadow-sm dark:prose-invert dark:border-slate-800/60 dark:bg-slate-900/60 sm:p-6"
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(lab.labNotes) }}
                   />
                 ) : (
-                  <div className="rounded-xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-muted-foreground sm:p-6">
+                  <div className="rounded-xl border border-dashed border-slate-200/70 bg-white/80 p-4 text-sm text-slate-500 dark:border-slate-800/60 dark:bg-slate-900/40 dark:text-slate-300 sm:p-6">
                     The author hasn&apos;t added detailed notes yet.
                   </div>
                 )}
@@ -641,37 +651,41 @@ export default function LabDetailContent() {
 
           {/* Configuration Files */}
           {files.length > 0 && (
-            <Card>
+            <Card className={surfaceCardStyles}>
               <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                  <FileText className="h-5 w-5 text-sky-500 dark:text-sky-300" />
                   Configuration Files & Resources
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm text-gray-600 dark:text-slate-300">
                   Download configuration files, packet traces, and additional resources
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-4 py-4 sm:px-6 sm:py-6">
                 <Tabs defaultValue="all" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 gap-2 sm:gap-4">
-                    <TabsTrigger value="all">All Files</TabsTrigger>
-                    <TabsTrigger value="configs">Configurations</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 gap-2 rounded-lg bg-slate-100/80 p-1 dark:bg-slate-900/60 sm:gap-3">
+                    <TabsTrigger value="all" className="data-[state=active]:bg-white/95 data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-800/70 dark:data-[state=active]:text-slate-100">
+                      All Files
+                    </TabsTrigger>
+                    <TabsTrigger value="configs" className="data-[state=active]:bg-white/95 data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-800/70 dark:data-[state=active]:text-slate-100">
+                      Configurations
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="all" className="space-y-3">
                     {files.map((file) => {
                       const FileIcon = getFileIcon(file.fileType);
                       return (
-                        <div key={file.id} className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div key={file.id} className="flex flex-col gap-4 rounded-xl border border-slate-200/70 bg-white/85 p-4 shadow-sm transition hover:border-slate-300 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800/60 dark:bg-slate-900/50 dark:hover:border-slate-700">
                           <div className="flex items-center gap-3">
-                            <FileIcon className="h-5 w-5 text-muted-foreground" />
+                            <FileIcon className="h-5 w-5 text-sky-500 dark:text-sky-300" />
                             <div>
-                              <p className="font-medium">{file.fileName}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {formatFileSize(file.fileSize)} • {file.fileType}
+                              <p className="font-medium text-gray-900 dark:text-white">{file.fileName}</p>
+                              <p className="text-sm text-gray-600 dark:text-slate-300">
+                                {formatFileSize(file.fileSize)} | {file.fileType}
                               </p>
                               {file.description && (
-                                <p className="text-sm text-muted-foreground mt-1">
+                                <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
                                   {file.description}
                                 </p>
                               )}
@@ -680,10 +694,10 @@ export default function LabDetailContent() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-11 w-full sm:w-auto"
+                            className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 sm:w-auto dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800"
                             onClick={() => handleDownload(file)}
                           >
-                            <Download className="h-4 w-4 mr-2" />
+                            <Download className="mr-2 h-4 w-4" />
                             Download
                           </Button>
                         </div>
@@ -697,23 +711,23 @@ export default function LabDetailContent() {
                       .map((file) => {
                         const FileIcon = getFileIcon(file.fileType);
                         return (
-                          <div key={file.id} className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+                          <div key={file.id} className="flex flex-col gap-4 rounded-xl border border-slate-200/70 bg-white/85 p-4 shadow-sm transition hover:border-slate-300 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800/60 dark:bg-slate-900/50 dark:hover:border-slate-700">
                             <div className="flex items-center gap-3">
-                              <FileIcon className="h-5 w-5 text-muted-foreground" />
+                              <FileIcon className="h-5 w-5 text-sky-500 dark:text-sky-300" />
                               <div>
-                                <p className="font-medium">{file.fileName}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {formatFileSize(file.fileSize)} • {file.fileType}
+                                <p className="font-medium text-gray-900 dark:text-white">{file.fileName}</p>
+                                <p className="text-sm text-gray-600 dark:text-slate-300">
+                                  {formatFileSize(file.fileSize)} | {file.fileType}
                                 </p>
                               </div>
                             </div>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-11 w-full sm:w-auto"
+                              className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 sm:w-auto dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800"
                               onClick={() => handleDownload(file)}
                             >
-                              <Download className="h-4 w-4 mr-2" />
+                              <Download className="mr-2 h-4 w-4" />
                               Download
                             </Button>
                           </div>
@@ -729,39 +743,39 @@ export default function LabDetailContent() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Lab Information */}
-          <Card>
+          <Card className={surfaceCardStyles}>
             <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
-              <CardTitle>Lab Information</CardTitle>
+              <CardTitle className="text-gray-900 dark:text-white">Lab Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 px-4 py-4 sm:px-6 sm:py-6">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={lab.author.image} alt={lab.author.name} />
-                  <AvatarFallback>
+                  <AvatarFallback className="bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                     {lab.author.name.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">{lab.author.name}</p>
-                  <p className="text-sm text-muted-foreground">Lab Author</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{lab.author.name}</p>
+                  <p className="text-sm text-gray-600 dark:text-slate-300">Lab Author</p>
                 </div>
               </div>
 
               <Separator />
 
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
+                  <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                   <span>Created: {formatDate(lab.createdAt)}</span>
                 </div>
 
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
+                  <Clock className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                   <span>Updated: {formatDate(lab.updatedAt)}</span>
                 </div>
 
-                <div className="flex items-center gap-2 text-sm">
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
+                  <Eye className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                   <span>Status: {lab.status}</span>
                 </div>
               </div>
@@ -772,18 +786,20 @@ export default function LabDetailContent() {
                 <h4 className="font-medium">Lab Details</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="text-muted-foreground">Category:</span>
-                    <Badge variant="outline">{lab.category}</Badge>
+                    <span className="text-gray-600 dark:text-slate-300">Category:</span>
+                    <Badge variant="outline" className="border-slate-200/70 bg-white/80 text-slate-900 dark:border-slate-700/60 dark:bg-slate-900/60 dark:text-slate-100">
+                      {lab.category}
+                    </Badge>
                   </div>
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="text-muted-foreground">Difficulty:</span>
+                    <span className="text-gray-600 dark:text-slate-300">Difficulty:</span>
                     <Badge className={difficultyColors[lab.difficulty]}>
                       {lab.difficulty}
                     </Badge>
                   </div>
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="text-muted-foreground">Files:</span>
-                    <span>{files.length} file(s)</span>
+                    <span className="text-gray-600 dark:text-slate-300">Files:</span>
+                    <span className="text-gray-700 dark:text-slate-200">{files.length} file(s)</span>
                   </div>
                 </div>
               </div>
@@ -791,36 +807,36 @@ export default function LabDetailContent() {
           </Card>
 
           {/* Quick Actions */}
-          <Card>
+          <Card className={surfaceCardStyles}>
             <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 px-4 py-4 sm:px-6 sm:py-6">
               <Button
-                className="h-11 w-full"
+                className="h-11 w-full bg-sky-600 text-white shadow-sm transition hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-400"
                 variant="default"
                 onClick={() => {
                   const element = document.getElementById('ai-assistant-section');
                   element?.scrollIntoView({ behavior: 'smooth' });
                 }}
               >
-                <BookOpen className="h-4 w-4 mr-2" />
+                <BookOpen className="mr-2 h-4 w-4" />
                 AI Assistant
               </Button>
 
-              <Button className="h-11 w-full" variant="outline" asChild>
+              <Button className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800" variant="outline" asChild>
                 <Link href={`/upload?duplicate=${lab.id}`}>
-                  <Package className="h-4 w-4 mr-2" />
+                  <Package className="mr-2 h-4 w-4" />
                   Duplicate Lab
                 </Link>
               </Button>
 
               <Button
-                className="h-11 w-full"
+                className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800"
                 variant="outline"
                 onClick={() => window.open(`/api/labs/${lab.id}/export`, '_blank')}
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="mr-2 h-4 w-4" />
                 Export Lab
               </Button>
             </CardContent>
@@ -832,8 +848,8 @@ export default function LabDetailContent() {
       <div id="ai-assistant-section" className="space-y-6">
         <Separator />
         <div>
-          <h2 className="mb-4 text-xl font-bold sm:text-2xl">AI Lab Assistant</h2>
-          <p className="mb-6 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">AI Lab Assistant</h2>
+          <p className="mb-6 text-sm leading-relaxed text-gray-600 dark:text-slate-300 sm:text-base">
             Get personalized help understanding this network topology, configurations, and concepts
           </p>
           <div className="max-w-4xl">
@@ -853,8 +869,8 @@ export default function LabDetailContent() {
         <div className="space-y-6">
           <Separator />
           <div>
-            <h2 className="mb-4 text-xl font-bold sm:text-2xl">Related Labs</h2>
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+            <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Related Labs</h2>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
               {relatedLabs.map((relatedLab) => (
                 <LabCard key={relatedLab.id} {...relatedLab} />
               ))}
@@ -866,6 +882,11 @@ export default function LabDetailContent() {
     </div>
   );
 }
+
+
+
+
+
 
 
 

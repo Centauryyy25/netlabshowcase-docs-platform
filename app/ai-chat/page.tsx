@@ -5,8 +5,11 @@ export const dynamic = "force-dynamic"
 
 export default function AiChatPage() {
   return (
-    <Suspense fallback={<div className="py-8 text-center">Loading chat...</div>}>
+    <Suspense fallback={<div className="py-8 text-center ">Loading chat...</div>}>
+      <div className="bg-white dark:bg-[#020618]">
+
       <AiChatContent />
+      </div>
     </Suspense>
   )
 }
