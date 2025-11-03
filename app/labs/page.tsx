@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { LabCard } from "@/components/lab-card";
@@ -55,7 +55,7 @@ const categories = [
 
 const difficulties = ["All", "Beginner", "Intermediate", "Advanced"] as const;
 
-export default function LabsPage() {
+function LabsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -363,5 +363,29 @@ export default function LabsPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+function LabsPageSkeleton() {
+  return (
+    <div className="min-h-screen bg-white dark:bg-[#050f24]">
+      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <Skeleton className="h-5 w-44" />
+        <Skeleton className="h-10 w-64" />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className="h-72 rounded-2xl" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function LabsPage() {
+  return (
+    <Suspense fallback={<LabsPageSkeleton />}>
+      <LabsPageContent />
+    </Suspense>
   );
 }
