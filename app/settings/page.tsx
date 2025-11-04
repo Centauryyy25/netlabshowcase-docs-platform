@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import { useSession, getSession } from "@/lib/auth-client"
+import { SignInPrompt } from "@/components/auth/SignInPrompt"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -72,8 +73,9 @@ type PreferencesState = {
 }
 
 export default function SettingsPage() {
-  const { data: session } = useSession()
+  const { data: session, isPending } = useSession()
   const { setTheme } = useTheme()
+  const isAuthenticated = Boolean(session?.user)
 
   const [initializing, setInitializing] = useState(true)
 
@@ -104,6 +106,11 @@ export default function SettingsPage() {
 
     const fetchSettings = async () => {
       try {
+        if (!isAuthenticated) {
+          setInitializing(false)
+          return
+        }
+
         const response = await fetch("/api/settings", {
           method: "GET",
           cache: "no-store",
@@ -158,7 +165,7 @@ export default function SettingsPage() {
     return () => {
       aborted = true
     }
-  }, [session?.user?.email, session?.user?.name])
+  }, [isAuthenticated, session?.user?.email, session?.user?.image, session?.user?.name])
 
   useEffect(() => {
     if (!initializing) {
@@ -368,6 +375,24 @@ export default function SettingsPage() {
     } finally {
       setPasswordSaving(false)
     }
+  }
+
+  if (isPending) {
+    return <SettingsSkeleton />
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#020618] px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-4xl space-y-6">
+          <SignInPrompt
+            title="Sign in to manage settings"
+            description="Update preferences, security options, and integrations after signing in."
+            redirectTo="/settings"
+          />
+        </div>
+      </div>
+    )
   }
 
   if (initializing) {

@@ -4,7 +4,6 @@ import * as React from "react"
 import Link from "next/link"
 import type { Route } from "next"
 import Image from "next/image"
-import { usePathname, useSearchParams } from "next/navigation"
 import { useSession } from "@/lib/auth-client"
 import {
   IconBook,
@@ -20,6 +19,8 @@ import {
   type Icon,
 } from "@tabler/icons-react"
 
+import type { DashboardViewKey } from "@/app/dashboard/DashboardViewContext"
+import { useDashboardView } from "@/app/dashboard/DashboardViewContext"
 import { QuickCreateLabModal } from "@/components/quick-create-lab-modal"
 import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
@@ -40,6 +41,7 @@ type MainNavigationItem = {
   title: string
   url: Route
   icon: Icon
+  viewKey?: DashboardViewKey
 }
 
 type DocumentNavigationItem = {
@@ -49,6 +51,7 @@ type DocumentNavigationItem = {
   categoryParam?: string
   exactPath?: Route
   hasActions?: boolean
+  viewKey?: DashboardViewKey
 }
 
 type SecondaryNavigationItem = {
@@ -62,26 +65,30 @@ const mainNavigation: MainNavigationItem[] = [
     title: "Dashboard",
     url: "/dashboard",
     icon: IconDashboard,
+    viewKey: "home",
   },
   {
     title: "Upload Lab",
     url: "/upload",
     icon: IconUpload,
+    viewKey: "upload",
   },
   {
     title: "My Labs",
     url: "/my-labs",
     icon: IconFolder,
+    viewKey: "mylabs",
   },
 ]
 
 const documentNavigation: DocumentNavigationItem[] = [
   {
-    name: "MPLS Labs",
-    url: "/dashboard?category=MPLS",
+    name: "Docs Bucket",
+    url: "/resource",
     icon: IconCloud,
     categoryParam: "MPLS",
     hasActions: true,
+    viewKey: "mpls",
   },
   {
     name: "Ai Asistent Lab",
@@ -89,18 +96,21 @@ const documentNavigation: DocumentNavigationItem[] = [
     icon: IconDeviceDesktop,
     categoryParam: "Wireless",
     hasActions: true,
+    viewKey: "ai",
   },
   {
     name: "All Categories",
     url: "/categories",
     icon: IconBook,
     exactPath: "/categories",
+    viewKey: "categories",
   },
   {
     name: "More",
     url: "/resources",
     icon: IconListDetails,
     exactPath: "/resources",
+    viewKey: "more",
   },
 ]
 
@@ -122,10 +132,9 @@ const secondaryNavigation: SecondaryNavigationItem[] = [
   },
 ]
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+function AppSidebarComponent({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const { activeView, setActiveView } = useDashboardView()
   const [isQuickCreateOpen, setIsQuickCreateOpen] = React.useState(false)
 
   const userData = session?.user
@@ -140,7 +149,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         avatar: etherDocsLogo.src,
       }
 
-  const activeCategory = pathname.startsWith("/dashboard") ? searchParams.get("category") : null
+  const handleSelectView = React.useCallback(
+    (view: DashboardViewKey) => {
+      setActiveView(view)
+    },
+    [setActiveView]
+  )
 
   return (
     <>
@@ -158,8 +172,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
-          <NavMain items={mainNavigation} onQuickCreate={() => setIsQuickCreateOpen(true)} />
-          <NavDocuments items={documentNavigation} activeCategory={activeCategory} />
+          <NavMain
+            items={mainNavigation}
+            onQuickCreate={() => setIsQuickCreateOpen(true)}
+            activeView={activeView}
+            onSelectView={handleSelectView}
+          />
+          <NavDocuments
+            items={documentNavigation}
+            activeView={activeView}
+            onSelectView={handleSelectView}
+          />
           <NavSecondary items={secondaryNavigation} className="mt-auto" />
         </SidebarContent>
         <SidebarFooter>
@@ -170,3 +193,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     </>
   )
 }
+
+const AppSidebar = React.memo(AppSidebarComponent)
+AppSidebar.displayName = "AppSidebar"
+
+export { AppSidebar }
+export default AppSidebar

@@ -5,6 +5,7 @@ import type { Route } from "next"
 import { usePathname } from "next/navigation"
 import { IconCirclePlusFilled, IconUpload, type Icon } from "@tabler/icons-react"
 
+import type { DashboardViewKey } from "@/app/dashboard/DashboardViewContext"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
@@ -20,23 +21,45 @@ type NavItem = {
   url: Route
   icon?: Icon
   matchStrict?: boolean
+  viewKey?: DashboardViewKey
 }
 
 interface NavMainProps {
   items: NavItem[]
   onQuickCreate: () => void
+  activeView?: DashboardViewKey
+  onSelectView?: (view: DashboardViewKey) => void
 }
 
-export function NavMain({ items, onQuickCreate }: NavMainProps) {
+export function NavMain({ items, onQuickCreate, activeView, onSelectView }: NavMainProps) {
   const pathname = usePathname()
 
   const isActive = (item: NavItem) => {
+    if (item.viewKey) {
+      return activeView === item.viewKey
+    }
+
     if (item.matchStrict) {
       return pathname === item.url
     }
 
     return pathname === item.url || pathname.startsWith(`${item.url}/`)
   }
+
+  const itemClass = (item: NavItem) =>
+    cn(
+      "transition-all duration-150",
+      isActive(item)
+        ? "bg-primary/10 text-primary shadow-inner"
+        : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+    )
+
+  const renderItemContent = (item: NavItem) => (
+    <>
+      {item.icon && <item.icon className="size-4" />}
+      <span>{item.title}</span>
+    </>
+  )
 
   return (
     <SidebarGroup>
@@ -51,39 +74,54 @@ export function NavMain({ items, onQuickCreate }: NavMainProps) {
               <IconCirclePlusFilled className="size-4" />
               <span>Quick Create</span>
             </SidebarMenuButton>
-            <Button
-              asChild
-              size="icon"
-              className="size-8 group-data-[collapsible=icon]:opacity-0"
-              variant="outline"
-            >
-              <Link href="/upload">
+            {onSelectView ? (
+              <Button
+                size="icon"
+                type="button"
+                className="size-8 group-data-[collapsible=icon]:opacity-0"
+                variant="outline"
+                onClick={() => onSelectView("upload")}
+              >
                 <IconUpload className="size-4" />
                 <span className="sr-only">Open upload page</span>
-              </Link>
-            </Button>
+              </Button>
+            ) : (
+              <Button
+                asChild
+                size="icon"
+                className="size-8 group-data-[collapsible=icon]:opacity-0"
+                variant="outline"
+              >
+                <Link href="/upload">
+                  <IconUpload className="size-4" />
+                  <span className="sr-only">Open upload page</span>
+                </Link>
+              </Button>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                tooltip={item.title}
-                asChild
-                className={cn(
-                  "transition-all duration-150",
-                  isActive(item)
-                    ? "bg-primary/10 text-primary shadow-inner"
-                    : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+          {items.map((item) => {
+            const { viewKey } = item
+            return (
+              <SidebarMenuItem key={item.title}>
+                {viewKey && onSelectView ? (
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    type="button"
+                    className={itemClass(item)}
+                    onClick={() => onSelectView(viewKey)}
+                  >
+                    {renderItemContent(item)}
+                  </SidebarMenuButton>
+                ) : (
+                  <SidebarMenuButton tooltip={item.title} asChild className={itemClass(item)}>
+                    <Link href={item.url}>{renderItemContent(item)}</Link>
+                  </SidebarMenuButton>
                 )}
-              >
-                <Link href={item.url}>
-                  {item.icon && <item.icon className="size-4" />}
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+              </SidebarMenuItem>
+            )
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

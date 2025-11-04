@@ -44,14 +44,26 @@ function SheetOverlay({
   )
 }
 
+type SheetContentProps = React.ComponentProps<typeof SheetPrimitive.Content> & {
+  side?: "top" | "right" | "bottom" | "left"
+  ariaTitle?: string
+}
+
 function SheetContent({
   className,
   children,
   side = "right",
+  ariaTitle = "Sheet dialog",
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Content> & {
-  side?: "top" | "right" | "bottom" | "left"
-}) {
+}: SheetContentProps) {
+  const {
+    ["aria-label"]: ariaLabel,
+    ["aria-labelledby"]: ariaLabelledBy,
+    ...contentProps
+  } = props
+  const hasExplicitLabel = Boolean(ariaLabel || ariaLabelledBy)
+  const generatedTitleId = React.useId()
+
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -69,8 +81,15 @@ function SheetContent({
             "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t",
           className
         )}
-        {...props}
+        aria-label={ariaLabel}
+        aria-labelledby={hasExplicitLabel ? ariaLabelledBy : generatedTitleId}
+        {...contentProps}
       >
+        {!hasExplicitLabel && (
+          <SheetPrimitive.Title id={generatedTitleId} className="sr-only">
+            {ariaTitle}
+          </SheetPrimitive.Title>
+        )}
         {children}
         <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
           <XIcon className="size-4" />

@@ -8,6 +8,8 @@ import { AiChat } from "@/components/ai-chat"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, BookOpen, Bot } from "lucide-react"
+import { useSession } from "@/lib/auth-client"
+import { SignInPrompt } from "@/components/auth/SignInPrompt"
 
 interface LabSummary {
   id: string
@@ -24,9 +26,11 @@ export default function AiChatContent() {
   const labId = searchParams.get("labId")
   const [labData, setLabData] = useState<LabSummary | null>(null)
   const [loading, setLoading] = useState(false)
+  const { data: session, isPending } = useSession()
+  const isAuthenticated = Boolean(session?.user)
 
   const fetchLabData = useCallback(async () => {
-    if (!labId) return
+    if (!labId || !isAuthenticated) return
 
     try {
       setLoading(true)
@@ -42,11 +46,33 @@ export default function AiChatContent() {
     } finally {
       setLoading(false)
     }
-  }, [labId])
+  }, [isAuthenticated, labId])
 
   useEffect(() => {
     void fetchLabData()
   }, [fetchLabData])
+
+  if (isPending) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center bg-white dark:bg-[#020618]">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#020618] px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-4xl space-y-6">
+          <SignInPrompt
+            title="Sign in to use the AI Assistant"
+            description="Authenticate to chat with the AI Lab Assistant and unlock contextual lab guidance."
+            redirectTo="/ai-chat"
+          />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto py-8 space-y-6 bg-white dark:bg-[#020618]">
@@ -170,4 +196,3 @@ export default function AiChatContent() {
     </div>
   )
 }
-
