@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import Link from 'next/link';
 import { toast } from 'sonner';
 import { LabCard } from '@/components/lab-card';
 import { Input } from '@/components/ui/input';
@@ -21,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Search, Filter, Grid, List, Upload, Plus, SlidersHorizontal, X } from 'lucide-react';
+import { useModalManager } from '@/context/ModalManagerContext';
 
 interface Lab {
   id: string;
@@ -141,6 +141,7 @@ export default function DashboardContent(
   const router = useRouter();
   const paramsSignature = searchParams.toString();
   const defaultCategorySlug = defaultCategory ? toSlug(defaultCategory) : '';
+  const { openQuickUpload } = useModalManager();
 
   const initialSearchTerm = searchParams.get('search') ?? '';
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
@@ -432,11 +433,13 @@ export default function DashboardContent(
           </p>
         </div>
 
-        <Button asChild className="h-11 w-full sm:w-auto">
-          <Link href="/upload" className="flex items-center gap-2">
-            <Upload className="h-4 w-4" />
-            Upload Lab
-          </Link>
+        <Button
+          type="button"
+          onClick={openQuickUpload}
+          className="flex h-11 w-full items-center justify-center gap-2 sm:w-auto"
+        >
+          <Upload className="h-4 w-4" />
+          Upload Lab
         </Button>
       </div>
 
@@ -797,11 +800,13 @@ export default function DashboardContent(
                     Try adjusting your filters or be the first to upload a lab in this category!
                   </p>
                 </div>
-                <Button asChild className="h-11 w-full sm:w-auto">
-                  <Link href="/upload">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Upload First Lab
-                  </Link>
+                <Button
+                  type="button"
+                  className="h-11 w-full sm:w-auto"
+                  onClick={openQuickUpload}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Upload First Lab
                 </Button>
               </div>
             </CardContent>

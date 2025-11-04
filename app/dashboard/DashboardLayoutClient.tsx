@@ -9,6 +9,8 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { SiteHeader } from "@/components/site-header"
+import { QuickUploadModal } from "@/components/labs/QuickUploadModal"
+import { GlobalHotkeys } from "@/components/keyboard/GlobalHotkeys"
 
 import { DashboardViewProvider } from "./DashboardViewContext"
 
@@ -50,6 +52,8 @@ function DashboardLayoutClientComponent({
           </div>
         </SidebarInset>
       </DashboardViewProvider>
+      <QuickUploadModal />
+      <GlobalHotkeys />
     </SidebarProvider>
   )
 }

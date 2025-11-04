@@ -67,12 +67,12 @@ const mainNavigation: MainNavigationItem[] = [
     icon: IconDashboard,
     viewKey: "home",
   },
-  {
-    title: "Upload Lab",
-    url: "/upload",
-    icon: IconUpload,
-    viewKey: "upload",
-  },
+  // {
+  //   title: "Upload Lab",
+  //   url: "/upload",
+  //   icon: IconUpload,
+  //   viewKey: "upload",
+  // },
   {
     title: "My Labs",
     url: "/my-labs",
@@ -83,7 +83,7 @@ const mainNavigation: MainNavigationItem[] = [
 
 const documentNavigation: DocumentNavigationItem[] = [
   {
-    name: "Docs Bucket",
+    name: "DocsBucket",
     url: "/resource",
     icon: IconCloud,
     categoryParam: "MPLS",

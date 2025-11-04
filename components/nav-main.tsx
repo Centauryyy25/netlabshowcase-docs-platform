@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import { IconCirclePlusFilled, IconUpload, type Icon } from "@tabler/icons-react"
 
 import type { DashboardViewKey } from "@/app/dashboard/DashboardViewContext"
+import { useModalManager } from "@/context/ModalManagerContext"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
@@ -33,6 +34,7 @@ interface NavMainProps {
 
 export function NavMain({ items, onQuickCreate, activeView, onSelectView }: NavMainProps) {
   const pathname = usePathname()
+  const { openQuickUpload } = useModalManager()
 
   const isActive = (item: NavItem) => {
     if (item.viewKey) {
@@ -74,30 +76,21 @@ export function NavMain({ items, onQuickCreate, activeView, onSelectView }: NavM
               <IconCirclePlusFilled className="size-4" />
               <span>Quick Create</span>
             </SidebarMenuButton>
-            {onSelectView ? (
-              <Button
-                size="icon"
-                type="button"
-                className="size-8 group-data-[collapsible=icon]:opacity-0"
-                variant="outline"
-                onClick={() => onSelectView("upload")}
-              >
-                <IconUpload className="size-4" />
-                <span className="sr-only">Open upload page</span>
-              </Button>
-            ) : (
-              <Button
-                asChild
-                size="icon"
-                className="size-8 group-data-[collapsible=icon]:opacity-0"
-                variant="outline"
-              >
-                <Link href="/upload">
-                  <IconUpload className="size-4" />
-                  <span className="sr-only">Open upload page</span>
-                </Link>
-              </Button>
-            )}
+            <Button
+              size="icon"
+              type="button"
+              className="size-8 group-data-[collapsible=icon]:opacity-0"
+              variant="outline"
+              onClick={() => {
+                if (onSelectView) {
+                  onSelectView("upload")
+                }
+                openQuickUpload()
+              }}
+            >
+              <IconUpload className="size-4" />
+              <span className="sr-only">Open quick upload modal</span>
+            </Button>
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -57,9 +57,15 @@ type CreateLabApiResponse =
   | { success: true; data: { id: string; title: string; status: LabStatus } }
   | { success: false; error?: string };
 
-export default function UploadPage() {
+type UploadPageProps = {
+  variant?: 'page' | 'modal';
+};
+
+export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
   const { data: session, isPending } = useSession();
   const [currentStep, setCurrentStep] = useState(1);
+  const totalFormSteps = variant === 'modal' ? 5 : 3;
+  const successStep = totalFormSteps + 1;
   const [uploadedLab, setUploadedLab] = useState<{
     id: string;
     title: string;
@@ -68,6 +74,10 @@ export default function UploadPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedTopologyUrl, setUploadedTopologyUrl] = useState<string | null>(null);
+  const [isTopologyUploading, setIsTopologyUploading] = useState(false);
+  const [isReviewDelayActive, setIsReviewDelayActive] = useState(false);
+  const [reviewDelayRemaining, setReviewDelayRemaining] = useState(0);
+  const REVIEW_DELAY_MS = 10000;
 
   const form = useForm<LabFormData>({
     resolver: zodResolver(labFormSchema),
@@ -92,7 +102,8 @@ export default function UploadPage() {
         toast.error('Please drop an image file for topology');
       }
     } else {
-      form.setValue('additionalFiles', files);
+      const validFiles = files.filter(validateFile);
+      form.setValue('additionalFiles', validFiles);
     }
   };
 
@@ -109,6 +120,11 @@ export default function UploadPage() {
   };
 
   const onSubmit: SubmitHandler<LabFormData> = async (data) => {
+    if (isTopologyUploading) {
+      toast.error('Please wait for the topology image upload to finish before submitting.');
+      return;
+    }
+
     setIsSubmitting(true);
     setUploadProgress(0);
 
@@ -183,7 +199,7 @@ export default function UploadPage() {
 
       setUploadProgress(100);
       setUploadedLab(labData.data);
-      setCurrentStep(4); // Success step
+      setCurrentStep(successStep); // Success step
       toast.success('Lab uploaded successfully!');
     } catch (error) {
       console.error('Upload error:', error);
@@ -199,7 +215,7 @@ export default function UploadPage() {
     const isStepValid = await form.trigger(fieldsToValidate, { shouldFocus: true });
 
     if (isStepValid) {
-      setCurrentStep(prev => Math.min(prev + 1, 4));
+      setCurrentStep(prev => Math.min(prev + 1, totalFormSteps));
     }
   };
 
@@ -208,393 +224,624 @@ export default function UploadPage() {
   };
 
   const getFieldsForStep = (step: number): Array<keyof LabFormData> => {
-    switch (step) {
-      case 1:
-        return ['title', 'description'] as Array<keyof LabFormData>
-      case 2:
-        return ['category', 'difficulty'] as Array<keyof LabFormData>
-      case 3:
-        return [] as Array<keyof LabFormData>
-      default:
-        return [] as Array<keyof LabFormData>
+    if (step === 1) {
+      return ['title', 'description'];
     }
+
+    if (variant === 'modal') {
+      if (step === 3) {
+        return ['category', 'difficulty', 'status'];
+      }
+      return [];
+    }
+
+    if (step === 2) {
+      return ['category', 'difficulty', 'status'];
+    }
+
+    return [];
   };
 
+  useEffect(() => {
+    if (variant === 'modal' && currentStep === 5) {
+      setIsReviewDelayActive(true);
+      setReviewDelayRemaining(Math.ceil(REVIEW_DELAY_MS / 1000));
+
+      const countdown = window.setInterval(() => {
+        setReviewDelayRemaining((prev) => {
+          if (prev <= 1) {
+            window.clearInterval(countdown);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      const timer = window.setTimeout(() => {
+        setIsReviewDelayActive(false);
+        window.clearInterval(countdown);
+      }, REVIEW_DELAY_MS);
+
+      return () => {
+        window.clearTimeout(timer);
+        window.clearInterval(countdown);
+      };
+    }
+    setIsReviewDelayActive(false);
+    setReviewDelayRemaining(0);
+    return undefined;
+  }, [REVIEW_DELAY_MS, currentStep, variant]);
+
+  const renderBasicInformationSection = ({
+    heading = 'Basic Information',
+    description = 'Tell us about your networking lab',
+    showTitle = true,
+    showDescription = true,
+    showNotes = true,
+    showTags = true,
+  }: {
+    heading?: string;
+    description?: string;
+    showTitle?: boolean;
+    showDescription?: boolean;
+    showNotes?: boolean;
+    showTags?: boolean;
+  } = {}) => (
+    <div className="space-y-6">
+      <div>
+        <h2 className="mb-2 text-xl font-bold sm:text-2xl">{heading}</h2>
+        <p className="text-sm text-muted-foreground sm:text-base">{description}</p>
+      </div>
+
+      {showTitle && (
+        <FormField<LabFormData>
+          control={form.control}
+          name="title"
+          render={({ field }) => {
+            const { value, onChange, ...rest } = field;
+            return (
+              <FormItem>
+                <FormLabel>Lab Title *</FormLabel>
+                <FormControl>
+                  <Input
+                    {...rest}
+                    placeholder="e.g., OSPF Area Configuration Lab"
+                    value={typeof value === 'string' ? value : ''}
+                    onChange={(event) => onChange(event.target.value)}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Give your lab a clear, descriptive title
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
+      )}
+
+      {showDescription && (
+        <FormField<LabFormData>
+          control={form.control}
+          name="description"
+          render={({ field }) => {
+            const { value, onChange, ...rest } = field;
+            return (
+              <FormItem>
+                <FormLabel>Description *</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...rest}
+                    placeholder="Describe what students will learn and accomplish in this lab..."
+                    className="min-h-32"
+                    value={typeof value === 'string' ? value : ''}
+                    onChange={(event) => onChange(event.target.value)}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Provide a detailed description of the lab objectives and requirements
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
+      )}
+
+      {showNotes && (
+        <FormField<LabFormData>
+          control={form.control}
+          name="labNotes"
+          render={({ field }) => {
+            const content = typeof field.value === 'string' ? field.value : '';
+            return (
+              <FormItem>
+                <FormLabel>Detailed Notes</FormLabel>
+                <FormControl>
+                  <RichTextEditor value={content} onChange={field.onChange} />
+                </FormControl>
+                <FormDescription>
+                  Tambahkan teori, konfigurasi, atau dokumentasi lengkap lab di sini.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
+      )}
+
+      {showTags && (
+        <FormField<LabFormData>
+          control={form.control}
+          name="tags"
+          render={({ field }) => {
+            const { value, onChange, ...rest } = field;
+            return (
+              <FormItem>
+                <FormLabel>Tags</FormLabel>
+                <FormControl>
+                  <Input
+                    {...rest}
+                    placeholder="e.g., OSPF, Routing, IPv6 (comma-separated)"
+                    value={typeof value === 'string' ? value : ''}
+                    onChange={(event) => onChange(event.target.value)}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Add tags to help others find your lab (comma-separated)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
+      )}
+    </div>
+  );
+
+  const renderClassificationSection = ({
+    heading = 'Classification',
+    description = 'Help categorize your lab for better discovery',
+  }: {
+    heading?: string;
+    description?: string;
+  } = {}) => (
+    <div className="space-y-6">
+      <div>
+        <h2 className="mb-2 text-xl font-bold sm:text-2xl">{heading}</h2>
+        <p className="text-sm text-muted-foreground sm:text-base">{description}</p>
+      </div>
+
+      <FormField<LabFormData>
+        control={form.control}
+        name="category"
+        render={({ field }) => {
+          const value = typeof field.value === 'string' ? field.value : '';
+          return (
+            <FormItem>
+              <FormLabel>Category *</FormLabel>
+              <Select onValueChange={field.onChange} value={value || undefined}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent className={selectContentClassName}>
+                  <SelectItem value="Routing">Routing</SelectItem>
+                  <SelectItem value="Switching">Switching</SelectItem>
+                  <SelectItem value="Security">Security</SelectItem>
+                  <SelectItem value="MPLS">MPLS</SelectItem>
+                  <SelectItem value="Wireless">Wireless</SelectItem>
+                  <SelectItem value="Voice">Voice</SelectItem>
+                  <SelectItem value="Data Center">Data Center</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          );
+        }}
+      />
+
+      <FormField<LabFormData>
+        control={form.control}
+        name="difficulty"
+        render={({ field }) => {
+          const value = typeof field.value === 'string' ? field.value : '';
+          return (
+            <FormItem>
+              <FormLabel>Difficulty Level *</FormLabel>
+              <Select onValueChange={field.onChange} value={value || undefined}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select difficulty" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent className={selectContentClassName}>
+                  <SelectItem value="Beginner">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">Beginner</Badge>
+                      <span className="text-sm">Basic concepts, 1-2 hours</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="Intermediate">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="default">Intermediate</Badge>
+                      <span className="text-sm">Some experience required, 2-4 hours</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="Advanced">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="destructive">Advanced</Badge>
+                      <span className="text-sm">Expert knowledge, 4+ hours</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          );
+        }}
+      />
+
+      <FormField<LabFormData>
+        control={form.control}
+        name="status"
+        render={({ field }) => {
+          const value = typeof field.value === 'string' ? field.value : '';
+          return (
+            <FormItem>
+              <FormLabel>Publishing Status</FormLabel>
+              <Select onValueChange={field.onChange} value={value || undefined}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent className={selectContentClassName}>
+                  <SelectItem value="draft">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>Draft - Save but do not publish</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="published">
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      <span>Published - Make publicly available</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          );
+        }}
+      />
+    </div>
+  );
+
+  const renderFilesSection = ({
+    heading = 'Files & Resources',
+    description = 'Upload topology diagrams and configuration files',
+  }: {
+    heading?: string;
+    description?: string;
+  } = {}) => (
+    <div className="space-y-6">
+      <div>
+        <h2 className="mb-2 text-xl font-bold sm:text-2xl">{heading}</h2>
+        <p className="text-sm text-muted-foreground sm:text-base">{description}</p>
+      </div>
+
+      <div className="space-y-3">
+        <label className="text-sm font-medium">Topology Image (Optional)</label>
+        <UploadTopologyImage
+          className="w-full"
+          onUploaded={(publicUrl) => {
+            setUploadedTopologyUrl(publicUrl ?? null);
+          }}
+          onUploadingChange={setIsTopologyUploading}
+        />
+        {uploadedTopologyUrl && (
+          <p className="break-all text-xs text-green-600">Uploaded URL: {uploadedTopologyUrl}</p>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        <label className="text-sm font-medium">Additional Files (Optional)</label>
+        <div
+          className="cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition-colors hover:border-gray-400"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => handleFileDrop(e, 'additionalFiles')}
+        >
+          <input
+            type="file"
+            multiple
+          accept=".pkt,.zip,.txt,.cfg,.log"
+          className="hidden"
+          onChange={(e) => {
+              const files = Array.from(e.target.files || []);
+              const validFiles = files.filter(validateFile);
+              form.setValue('additionalFiles', validFiles);
+          }}
+        />
+          {form.watch('additionalFiles') && form.watch('additionalFiles')!.length > 0 ? (
+            <div className="space-y-2">
+              <Package className="mx-auto h-8 w-8 text-green-600" />
+              <p className="text-sm text-green-600">
+                {form.watch('additionalFiles')!.length} file(s) selected
+              </p>
+              <div className="flex flex-wrap justify-center gap-1">
+                {form.watch('additionalFiles')?.map((file, index) => (
+                  <Badge key={index} variant="secondary" className="text-xs">
+                    {file.name}
+                  </Badge>
+                ))}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-10 w-full sm:w-auto"
+                onClick={() => form.setValue('additionalFiles', [])}
+              >
+                Clear All
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Upload className="mx-auto h-8 w-8 text-gray-400" />
+              <p className="text-sm text-gray-600">
+                Drag and drop files here, or click to select
+              </p>
+              <p className="text-xs text-gray-500">PKT, ZIP, TXT, CFG, LOG files up to 10MB each</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderReviewSection = () => {
+    const values = form.getValues();
+    const cleanNotes = values.labNotes
+      ? values.labNotes.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+      : '';
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="mb-2 text-xl font-bold sm:text-2xl">Review & Submit</h2>
+          <p className="text-sm text-muted-foreground sm:text-base">
+            Take a moment to confirm the key details before publishing your lab.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
+            <p className="text-xs uppercase text-muted-foreground">Title</p>
+            <p className="mt-1 text-sm font-medium">{values.title || '—'}</p>
+          </div>
+          <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
+            <p className="text-xs uppercase text-muted-foreground">Category</p>
+            <p className="mt-1 text-sm font-medium">{values.category || '—'}</p>
+          </div>
+          <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
+            <p className="text-xs uppercase text-muted-foreground">Difficulty</p>
+            <p className="mt-1 text-sm font-medium">{values.difficulty || '—'}</p>
+          </div>
+          <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
+            <p className="text-xs uppercase text-muted-foreground">Status</p>
+            <p className="mt-1 text-sm font-medium">{values.status || '—'}</p>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
+          <p className="text-xs uppercase text-muted-foreground">Description</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {values.description ? values.description : '—'}
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
+          <p className="text-xs uppercase text-muted-foreground">Detailed Notes</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {cleanNotes ? cleanNotes.slice(0, 220) + (cleanNotes.length > 220 ? '…' : '') : 'No additional notes provided.'}
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
+            <p className="text-xs uppercase text-muted-foreground">Tags</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {values.tags ? values.tags : '—'}
+            </p>
+          </div>
+          <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
+            <p className="text-xs uppercase text-muted-foreground">Topology Image</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {uploadedTopologyUrl ? 'Image uploaded' : 'Not provided'}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
+          <p className="text-xs uppercase text-muted-foreground">Additional Files</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {form.watch('additionalFiles')?.length
+              ? `${form.watch('additionalFiles')!.length} file(s) attached`
+              : 'No additional files attached.'}
+          </p>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Submit becomes available shortly—use this time to double-check everything.
+        </p>
+      </div>
+    );
+  };
+
+  const renderSuccessSection = () => (
+    <div className="space-y-6 text-center">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+        <Check className="h-8 w-8 text-green-600" />
+      </div>
+      <div>
+        <h2 className="mb-2 text-2xl font-bold">Lab Uploaded Successfully!</h2>
+        <p className="text-muted-foreground">
+          Your networking lab {uploadedLab ? `${uploadedLab.title}` : 'your submission'} has been{' '}
+          {uploadedLab?.status === 'published' ? 'published' : 'saved as draft'}.
+        </p>
+      </div>
+      <div className="flex justify-center gap-4">
+        <Button asChild variant="outline">
+          <Link href="/dashboard">Back to Dashboard</Link>
+        </Button>
+        {uploadedLab && (
+          <Button asChild>
+            <Link href={`/labs/${uploadedLab.id}`}>View Lab</Link>
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+
   const renderStepContent = () => {
+    if (currentStep === successStep) {
+      return renderSuccessSection();
+    }
+
+    if (variant === 'modal') {
+      switch (currentStep) {
+        case 1:
+          return renderBasicInformationSection({
+            heading: 'Lab Overview',
+            description: 'Start with the essentials to introduce your lab.',
+            showNotes: false,
+            showTags: false,
+          });
+        case 2:
+          return renderBasicInformationSection({
+            heading: 'Detailed Notes & Tags',
+            description: 'Add in-depth guidance and keywords to help others find your lab.',
+            showTitle: false,
+            showDescription: false,
+          });
+        case 3:
+          return renderClassificationSection({
+            heading: 'Classification',
+            description: 'Group your lab by type and difficulty.',
+          });
+      case 4:
+        return renderFilesSection({
+          heading: 'Files & Resources',
+          description: 'Attach media and files that support your lab execution.',
+        });
+        case 5:
+          return renderReviewSection();
+      default:
+        return null;
+    }
+  }
+
     switch (currentStep) {
       case 1:
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="mb-2 text-xl font-bold sm:text-2xl">Basic Information</h2>
-              <p className="text-sm text-muted-foreground sm:text-base">Tell us about your networking lab</p>
-            </div>
-
-            <FormField<LabFormData>
-              control={form.control}
-              name="title"
-              render={({ field }) => {
-                const { value, onChange, ...rest } = field;
-                return (
-                  <FormItem>
-                    <FormLabel>Lab Title *</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...rest}
-                        placeholder="e.g., OSPF Area Configuration Lab"
-                        value={typeof value === 'string' ? value : ''}
-                        onChange={(event) => onChange(event.target.value)}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Give your lab a clear, descriptive title
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-
-            <FormField<LabFormData>
-              control={form.control}
-              name="description"
-              render={({ field }) => {
-                const { value, onChange, ...rest } = field;
-                return (
-                  <FormItem>
-                    <FormLabel>Description *</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...rest}
-                        placeholder="Describe what students will learn and accomplish in this lab..."
-                        className="min-h-32"
-                        value={typeof value === 'string' ? value : ''}
-                        onChange={(event) => onChange(event.target.value)}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Provide a detailed description of the lab objectives and requirements
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-
-            <FormField<LabFormData>
-              control={form.control}
-              name="labNotes"
-              render={({ field }) => {
-                const content = typeof field.value === 'string' ? field.value : '';
-                return (
-                  <FormItem>
-                    <FormLabel>Detailed Notes</FormLabel>
-                    <FormControl>
-                      <RichTextEditor value={content} onChange={field.onChange} />
-                    </FormControl>
-                    <FormDescription>
-                      Tambahkan teori, konfigurasi, atau dokumentasi lengkap lab di sini.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-
-            <FormField<LabFormData>
-              control={form.control}
-              name="tags"
-              render={({ field }) => {
-                const { value, onChange, ...rest } = field;
-                return (
-                  <FormItem>
-                    <FormLabel>Tags</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...rest}
-                        placeholder="e.g., OSPF, Routing, IPv6 (comma-separated)"
-                        value={typeof value === 'string' ? value : ''}
-                        onChange={(event) => onChange(event.target.value)}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Add tags to help others find your lab (comma-separated)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-          </div>
-        );
-
+        return renderBasicInformationSection();
       case 2:
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="mb-2 text-xl font-bold sm:text-2xl">Classification</h2>
-              <p className="text-sm text-muted-foreground sm:text-base">Help categorize your lab for better discovery</p>
-            </div>
-
-            <FormField<LabFormData>
-              control={form.control}
-              name="category"
-              render={({ field }) => {
-                const value = typeof field.value === 'string' ? field.value : '';
-                return (
-                  <FormItem>
-                    <FormLabel>Category *</FormLabel>
-                    <Select onValueChange={field.onChange} value={value || undefined}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Routing">Routing</SelectItem>
-                        <SelectItem value="Switching">Switching</SelectItem>
-                        <SelectItem value="Security">Security</SelectItem>
-                        <SelectItem value="MPLS">MPLS</SelectItem>
-                        <SelectItem value="Wireless">Wireless</SelectItem>
-                        <SelectItem value="Voice">Voice</SelectItem>
-                        <SelectItem value="Data Center">Data Center</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-
-            <FormField<LabFormData>
-              control={form.control}
-              name="difficulty"
-              render={({ field }) => {
-                const value = typeof field.value === 'string' ? field.value : '';
-                return (
-                  <FormItem>
-                    <FormLabel>Difficulty Level *</FormLabel>
-                    <Select onValueChange={field.onChange} value={value || undefined}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select difficulty" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Beginner">
-                          <div className="flex items-center gap-2">
-                          <Badge variant="secondary">Beginner</Badge>
-                          <span className="text-sm">Basic concepts, 1-2 hours</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="Intermediate">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="default">Intermediate</Badge>
-                          <span className="text-sm">Some experience required, 2-4 hours</span>
-                        </div>
-                      </SelectItem>
-                        <SelectItem value="Advanced">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="destructive">Advanced</Badge>
-                          <span className="text-sm">Expert knowledge, 4+ hours</span>
-                        </div>
-                      </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-
-            <FormField<LabFormData>
-              control={form.control}
-              name="status"
-              render={({ field }) => {
-                const value = typeof field.value === 'string' ? field.value : '';
-                return (
-                  <FormItem>
-                    <FormLabel>Publishing Status</FormLabel>
-                    <Select onValueChange={field.onChange} value={value || undefined}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="draft">
-                         <div className="flex items-center gap-2">
-                           <FileText className="h-4 w-4" />
-                           <span>Draft - Save but do not publish</span>
-                         </div>
-                       </SelectItem>
-                      <SelectItem value="published">
-                        <div className="flex items-center gap-2">
-                          <Package className="h-4 w-4" />
-                          <span>Published - Make publicly available</span>
-                        </div>
-                      </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-          </div>
-        );
-
+        return renderClassificationSection();
       case 3:
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="mb-2 text-xl font-bold sm:text-2xl">Files & Resources</h2>
-              <p className="text-sm text-muted-foreground sm:text-base">Upload topology diagrams and configuration files</p>
-            </div>
-
-            {/* Topology Image Upload (Supabase Storage) */}
-            <div className="space-y-3">
-              <label className="text-sm font-medium">Topology Image (Optional)</label>
-              <UploadTopologyImage
-                className=""
-                onUploaded={(publicUrl) => {
-                  setUploadedTopologyUrl(publicUrl ?? null);
-                }}
-              />
-              {uploadedTopologyUrl && (
-                <p className="text-xs text-green-600 break-all">Uploaded URL: {uploadedTopologyUrl}</p>
-              )}
-            </div>
-
-            {/* Additional Files Upload */}
-            <div className="space-y-3">
-              <label className="text-sm font-medium">Additional Files (Optional)</label>
-              <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => handleFileDrop(e, 'additionalFiles')}
-              >
-                <input
-                  type="file"
-                  multiple
-                  accept=".pkt,.zip,.txt,.cfg,.log"
-                  className="hidden"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || []);
-                    form.setValue('additionalFiles', files);
-                  }}
-                />
-                {form.watch('additionalFiles') && form.watch('additionalFiles')!.length > 0 ? (
-                  <div className="space-y-2">
-                    <Package className="h-8 w-8 mx-auto text-green-600" />
-                    <p className="text-sm text-green-600">
-                      {form.watch('additionalFiles')!.length} file(s) selected
-                    </p>
-                    <div className="flex flex-wrap gap-1 justify-center">
-                      {form.watch('additionalFiles')?.map((file, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {file.name}
-                        </Badge>
-                      ))}
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-10 w-full sm:w-auto"
-                      onClick={() => form.setValue('additionalFiles', [])}
-                    >
-                      Clear All
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Upload className="h-8 w-8 mx-auto text-gray-400" />
-                    <p className="text-sm text-gray-600">
-                      Drag and drop files here, or click to select
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      PKT, ZIP, TXT, CFG, LOG files up to 10MB each
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 4:
-        return (
-          <div className="text-center space-y-6">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <Check className="h-8 w-8 text-green-600" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Lab Uploaded Successfully!</h2>
-              <p className="text-muted-foreground">
-                Your networking lab {uploadedLab ? `${uploadedLab.title}` : 'your submission'} has been {uploadedLab?.status === 'published' ? 'published' : 'saved as draft'}.
-              </p>
-            </div>
-            <div className="flex gap-4 justify-center">
-              <Button asChild variant="outline">
-                <Link href="/dashboard">Back to Dashboard</Link>
-              </Button>
-              {uploadedLab && (
-                <Button asChild>
-                  <Link href={`/labs/${uploadedLab.id}`}>View Lab</Link>
-                </Button>
-              )}
-            </div>
-          </div>
-        );
-
+        return renderFilesSection();
       default:
         return null;
     }
   };
 
-  if (currentStep === 4) {
+  const stepTitles =
+    variant === 'modal'
+      ? ['Lab Overview', 'Detailed Notes & Tags', 'Classification', 'Files & Resources', 'Review & Submit']
+      : ['Basic Information', 'Classification', 'Files & Resources'];
+  const activeStep = Math.min(currentStep, totalFormSteps);
+  const isSuccessStep = currentStep === successStep;
+  const activeStepTitle = isSuccessStep ? 'Upload Complete' : stepTitles[activeStep - 1] ?? '';
+  const progressValue = (activeStep / totalFormSteps) * 100;
+  const selectContentClassName = variant === 'modal' ? 'z-[11000]' : undefined;
+
+  if (currentStep === successStep) {
     return (
-      <div className="container mx-auto px-4 py-8 sm:px-6">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="pt-6">
-            {renderStepContent()}
-          </CardContent>
-        </Card>
-      </div>
-    );
+      <div
+        className={
+          variant === 'modal'
+            ? 'mx-auto w-full max-w-[1000px]'
+            : 'container mx-auto px-4 py-8 sm:px-6'
+        }
+      >
+        <Card
+        className={
+          variant === 'modal'
+            ? 'mx-auto border-white/5 bg-sidebar/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 rounded-xl sm:rounded-2xl'
+            : 'mx-auto max-w-md'
+        }
+      >
+        <CardContent className={variant === 'modal' ? 'px-4 py-6 sm:px-6 sm:py-8' : 'pt-6'}>{renderStepContent()}</CardContent>
+      </Card>
+    </div>
+  );
   }
 
   if (isPending) {
     return (
-      <div className="container mx-auto px-4 py-8 sm:px-6">
-        <Card className="mx-auto max-w-md">
-          <CardHeader>
-            <CardTitle>Loading...</CardTitle>
-            <CardDescription>Checking your session</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Progress value={30} className="w-full" />
-          </CardContent>
-        </Card>
+      <div
+        className={
+          variant === 'modal'
+            ? 'mx-auto w-full max-w-md'
+            : 'container mx-auto px-4 py-8 sm:px-6'
+        }
+      >
+        <Card
+        className={
+          variant === 'modal'
+            ? 'border-white/5 bg-sidebar/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 rounded-xl sm:rounded-2xl'
+            : 'mx-auto max-w-md'
+        }
+      >
+        <CardHeader className={variant === 'modal' ? 'px-4 py-5 sm:px-6' : undefined}>
+          <CardTitle>Loading...</CardTitle>
+          <CardDescription>Checking your session</CardDescription>
+        </CardHeader>
+        <CardContent className={variant === 'modal' ? 'px-4 py-5 sm:px-6' : undefined}>
+          <Progress value={30} className="w-full" />
+        </CardContent>
+      </Card>
       </div>
     );
   }
 
   if (!session?.user) {
     return (
-      <div className="container mx-auto px-4 py-16 sm:px-6">
-        <Card className="mx-auto max-w-xl">
-          <CardHeader>
-            <CardTitle>Sign in required</CardTitle>
-            <CardDescription>You need to be signed in to upload a lab.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button asChild className="h-11 w-full sm:w-auto">
-                <Link href="/sign-in">Sign In</Link>
-              </Button>
+      <div
+        className={
+          variant === 'modal'
+            ? 'mx-auto w-full max-w-md'
+            : 'container mx-auto px-4 py-16 sm:px-6'
+        }
+      >
+        <Card
+        className={
+          variant === 'modal'
+            ? 'border-white/5 bg-sidebar/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 rounded-xl sm:rounded-2xl'
+            : 'mx-auto max-w-xl'
+        }
+      >
+        <CardHeader className={variant === 'modal' ? 'px-4 py-5 sm:px-6' : undefined}>
+          <CardTitle>Sign in required</CardTitle>
+          <CardDescription>You need to be signed in to upload a lab.</CardDescription>
+        </CardHeader>
+        <CardContent className={variant === 'modal' ? 'px-4 py-5 sm:px-6' : undefined}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button asChild className="h-11 w-full sm:w-auto">
+              <Link href="/sign-in">Sign In</Link>
+            </Button>
               <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
                 <Link href="/sign-up">Create Account</Link>
               </Button>
@@ -606,67 +853,108 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 sm:px-6">
-      <div className="mx-auto max-w-2xl px-4 sm:px-0">
+    <div
+        className={
+          variant === 'modal'
+            ? 'mx-auto w-full max-w-[1100px] px-0'
+            : 'container mx-auto px-4 py-8 sm:px-6'
+        }
+      >
+        <div
+          className={
+            variant === 'modal'
+              ? 'mx-auto w-full max-w-[1000px] space-y-6 px-0'
+              : 'mx-auto max-w-2xl px-4 sm:px-0'
+          }
+        >
         {/* Progress Bar */}
-        <div className="mb-8">
+        <div className={variant === 'modal' ? 'mb-6' : 'mb-8'}>
           <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <span className="text-sm font-medium">Step {currentStep} of 3</span>
-            <span className="text-xs text-muted-foreground sm:text-sm">
-              {currentStep === 1 && 'Basic Information'}
-              {currentStep === 2 && 'Classification'}
-              {currentStep === 3 && 'Files & Resources'}
+            <span className="text-sm font-medium">
+              Step {activeStep} of {totalFormSteps}
             </span>
+            <span className="text-xs text-muted-foreground sm:text-sm">{activeStepTitle}</span>
           </div>
-          <Progress value={(currentStep / 3) * 100} className="w-full" />
+          <Progress value={progressValue} className="w-full" />
         </div>
 
-        <Card>
-          <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
-            <CardTitle className="text-xl sm:text-2xl">Upload New Lab</CardTitle>
+        <Card
+          className={
+            variant === 'modal'
+              ? 'border-white/5 bg-sidebar/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 rounded-xl sm:rounded-2xl'
+              : undefined
+          }
+        >
+          {/* <CardHeader className={variant === 'modal' ? 'px-6 py-2' : 'px-4 py-4 sm:px-6 sm:py-2'}>
+            <CardTitle className="text-xl sm:text-2xl">
+              {variant === 'modal' ? 'Quick Upload Lab' : 'Upload New Lab'}
+            </CardTitle>
             <CardDescription>
-              Share your networking knowledge with the community
+              {variant === 'modal'
+                ? 'Complete the guided flow to publish your lab without leaving the dashboard.'
+                : 'Share your networking knowledge with the community'}
             </CardDescription>
-          </CardHeader>
-          <CardContent className="px-4 py-4 sm:px-6 sm:py-6">
+          </CardHeader> */}
+          <CardContent className={variant === 'modal' ? 'px-4 py-4 sm:px-6 sm:py-2' : 'px-4 py-4 sm:px-6 sm:py-2'}>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 {renderStepContent()}
 
                 {/* Navigation Buttons */}
-                <div className="flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-11 w-full sm:w-auto"
-                    onClick={prevStep}
-                    disabled={currentStep === 1}
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Previous
-                  </Button>
+                {currentStep !== successStep && (
+                  <div className="flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 w-full sm:w-auto"
+                      onClick={prevStep}
+                      disabled={currentStep === 1}
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Previous
+                    </Button>
 
-                  {currentStep < 3 ? (
-                    <Button type="button" className="h-11 w-full sm:w-auto" onClick={nextStep}>
-                      Next
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  ) : (
-                    <Button type="submit" className="h-11 w-full sm:w-auto" disabled={isSubmitting}>
-                      {isSubmitting ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload Lab
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
+                    {currentStep < totalFormSteps ? (
+                      <Button type="button" className="h-11 w-full sm:w-auto" onClick={nextStep}>
+                        Next
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        type="submit"
+                        className="h-11 w-full sm:w-auto"
+                        disabled={
+                          isSubmitting ||
+                          isTopologyUploading ||
+                          (variant === 'modal' && currentStep === totalFormSteps && isReviewDelayActive)
+                        }
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="mr-2 h-4 w-4" />
+                            Upload Lab
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {isTopologyUploading && (
+                  <p className="text-sm text-muted-foreground">
+                    Topology image upload in progress. Please wait until it finishes before submitting.
+                  </p>
+                )}
+                {variant === 'modal' && currentStep === totalFormSteps && isReviewDelayActive && (
+                  <p className="text-sm text-muted-foreground">
+                    Preparing submission... Submit will unlock in approximately {reviewDelayRemaining}s.
+                  </p>
+                )}
 
                 {/* Upload Progress */}
                 {isSubmitting && (
@@ -686,8 +974,3 @@ export default function UploadPage() {
     </div>
   );
 }
-
-
-
-
-
