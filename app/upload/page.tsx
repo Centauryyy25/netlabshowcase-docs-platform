@@ -15,7 +15,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Upload, FileText, Package, ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { Upload, FileText, Package, ArrowLeft, ArrowRight, Check, Clock } from 'lucide-react';
 import Link from 'next/link';
 import UploadTopologyImage from '@/components/labs/UploadTopologyImage';
 
@@ -36,6 +36,13 @@ const ALLOWED_FILE_TYPES = [
 const CATEGORY_OPTIONS = ['Routing', 'Switching', 'Security', 'MPLS', 'Wireless', 'Voice', 'Data Center', 'Other'] as const
 const DIFFICULTY_OPTIONS = ['Beginner', 'Intermediate', 'Advanced'] as const
 const STATUS_OPTIONS = ['draft', 'published'] as const
+
+const REVIEW_TIMEOUT_SECONDS = 60;
+
+const stripHtml = (value?: string) => {
+  if (!value) return '';
+  return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+};
 
 const labFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
@@ -64,7 +71,7 @@ type UploadPageProps = {
 export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
   const { data: session, isPending } = useSession();
   const [currentStep, setCurrentStep] = useState(1);
-  const totalFormSteps = variant === 'modal' ? 5 : 3;
+  const totalFormSteps = variant === 'modal' ? 5 : 4;
   const successStep = totalFormSteps + 1;
   const [uploadedLab, setUploadedLab] = useState<{
     id: string;
@@ -74,10 +81,7 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedTopologyUrl, setUploadedTopologyUrl] = useState<string | null>(null);
-  const [isTopologyUploading, setIsTopologyUploading] = useState(false);
-  const [isReviewDelayActive, setIsReviewDelayActive] = useState(false);
-  const [reviewDelayRemaining, setReviewDelayRemaining] = useState(0);
-  const REVIEW_DELAY_MS = 10000;
+  const [reviewTimeLeft, setReviewTimeLeft] = useState<number | null>(null);
 
   const form = useForm<LabFormData>({
     resolver: zodResolver(labFormSchema),
@@ -89,6 +93,8 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
       tags: '',
     },
   });
+
+  const watchedValues = form.watch();
 
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>, fieldName: 'topologyImage' | 'additionalFiles') => {
     e.preventDefault();
@@ -102,8 +108,7 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
         toast.error('Please drop an image file for topology');
       }
     } else {
-      const validFiles = files.filter(validateFile);
-      form.setValue('additionalFiles', validFiles);
+      form.setValue('additionalFiles', files);
     }
   };
 
@@ -120,11 +125,6 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
   };
 
   const onSubmit: SubmitHandler<LabFormData> = async (data) => {
-    if (isTopologyUploading) {
-      toast.error('Please wait for the topology image upload to finish before submitting.');
-      return;
-    }
-
     setIsSubmitting(true);
     setUploadProgress(0);
 
@@ -243,34 +243,35 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
   };
 
   useEffect(() => {
-    if (variant === 'modal' && currentStep === 5) {
-      setIsReviewDelayActive(true);
-      setReviewDelayRemaining(Math.ceil(REVIEW_DELAY_MS / 1000));
-
-      const countdown = window.setInterval(() => {
-        setReviewDelayRemaining((prev) => {
-          if (prev <= 1) {
-            window.clearInterval(countdown);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      const timer = window.setTimeout(() => {
-        setIsReviewDelayActive(false);
-        window.clearInterval(countdown);
-      }, REVIEW_DELAY_MS);
-
-      return () => {
-        window.clearTimeout(timer);
-        window.clearInterval(countdown);
-      };
+    if (currentStep !== totalFormSteps || isSubmitting) {
+      setReviewTimeLeft(null);
+      return;
     }
-    setIsReviewDelayActive(false);
-    setReviewDelayRemaining(0);
-    return undefined;
-  }, [REVIEW_DELAY_MS, currentStep, variant]);
+
+    setReviewTimeLeft(REVIEW_TIMEOUT_SECONDS);
+
+    const interval = window.setInterval(() => {
+      setReviewTimeLeft(prev => {
+        if (prev === null) {
+          return prev;
+        }
+
+        if (prev <= 1) {
+          window.clearInterval(interval);
+          toast.warning('Review session timed out. Please review your submission again.');
+          setCurrentStep(Math.max(totalFormSteps - 1, 1));
+          return 0;
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      window.clearInterval(interval);
+      setReviewTimeLeft(null);
+    };
+  }, [currentStep, isSubmitting, totalFormSteps]);
 
   const renderBasicInformationSection = ({
     heading = 'Basic Information',
@@ -426,7 +427,7 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className={selectContentClassName}>
+                <SelectContent>
                   <SelectItem value="Routing">Routing</SelectItem>
                   <SelectItem value="Switching">Switching</SelectItem>
                   <SelectItem value="Security">Security</SelectItem>
@@ -457,7 +458,7 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
                     <SelectValue placeholder="Select difficulty" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className={selectContentClassName}>
+                <SelectContent>
                   <SelectItem value="Beginner">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">Beginner</Badge>
@@ -498,7 +499,7 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className={selectContentClassName}>
+                <SelectContent>
                   <SelectItem value="draft">
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
@@ -537,11 +538,10 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
       <div className="space-y-3">
         <label className="text-sm font-medium">Topology Image (Optional)</label>
         <UploadTopologyImage
-          className="w-full"
+          className=""
           onUploaded={(publicUrl) => {
             setUploadedTopologyUrl(publicUrl ?? null);
           }}
-          onUploadingChange={setIsTopologyUploading}
         />
         {uploadedTopologyUrl && (
           <p className="break-all text-xs text-green-600">Uploaded URL: {uploadedTopologyUrl}</p>
@@ -558,14 +558,13 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
           <input
             type="file"
             multiple
-          accept=".pkt,.zip,.txt,.cfg,.log"
-          className="hidden"
-          onChange={(e) => {
+            accept=".pkt,.zip,.txt,.cfg,.log"
+            className="hidden"
+            onChange={(e) => {
               const files = Array.from(e.target.files || []);
-              const validFiles = files.filter(validateFile);
-              form.setValue('additionalFiles', validFiles);
-          }}
-        />
+              form.setValue('additionalFiles', files);
+            }}
+          />
           {form.watch('additionalFiles') && form.watch('additionalFiles')!.length > 0 ? (
             <div className="space-y-2">
               <Package className="mx-auto h-8 w-8 text-green-600" />
@@ -603,81 +602,130 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
     </div>
   );
 
-  const renderReviewSection = () => {
-    const values = form.getValues();
-    const cleanNotes = values.labNotes
-      ? values.labNotes.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-      : '';
+  const renderReviewSection = ({
+    heading = 'Review & Confirm',
+    description = 'Double-check all details before submitting your lab.',
+  }: {
+    heading?: string;
+    description?: string;
+  } = {}) => {
+    const {
+      title,
+      description: overviewDescription,
+      labNotes,
+      category,
+      difficulty,
+      status,
+      tags,
+      additionalFiles,
+    } = watchedValues;
+
+    const parsedTags =
+      typeof tags === 'string'
+        ? tags
+            .split(',')
+            .map(tag => tag.trim())
+            .filter(Boolean)
+        : [];
+
+    const plainDescription =
+      typeof overviewDescription === 'string' ? stripHtml(overviewDescription) : '';
+    const plainNotes = typeof labNotes === 'string' ? stripHtml(labNotes) : '';
+    const files = Array.isArray(additionalFiles) ? additionalFiles : [];
 
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="mb-2 text-xl font-bold sm:text-2xl">Review & Submit</h2>
-          <p className="text-sm text-muted-foreground sm:text-base">
-            Take a moment to confirm the key details before publishing your lab.
-          </p>
+          <h2 className="mb-2 text-xl font-bold sm:text-2xl">{heading}</h2>
+          <p className="text-sm text-muted-foreground sm:text-base">{description}</p>
         </div>
+
+        {reviewTimeLeft !== null && (
+          <div className="flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-900">
+            <Clock className="h-4 w-4" />
+            <span>
+              Confirm within {reviewTimeLeft} second{reviewTimeLeft === 1 ? '' : 's'} before the review resets.
+            </span>
+          </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
-            <p className="text-xs uppercase text-muted-foreground">Title</p>
-            <p className="mt-1 text-sm font-medium">{values.title || '—'}</p>
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <p className="text-sm font-medium text-muted-foreground">Title</p>
+            <p className="mt-2 text-base font-semibold text-foreground">{title || '—'}</p>
           </div>
-          <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
-            <p className="text-xs uppercase text-muted-foreground">Category</p>
-            <p className="mt-1 text-sm font-medium">{values.category || '—'}</p>
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <p className="text-sm font-medium text-muted-foreground">Status</p>
+            <p className="mt-2 text-base font-semibold capitalize text-foreground">{status || '—'}</p>
           </div>
-          <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
-            <p className="text-xs uppercase text-muted-foreground">Difficulty</p>
-            <p className="mt-1 text-sm font-medium">{values.difficulty || '—'}</p>
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <p className="text-sm font-medium text-muted-foreground">Category</p>
+            <p className="mt-2 text-base font-semibold text-foreground">{category || '—'}</p>
           </div>
-          <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
-            <p className="text-xs uppercase text-muted-foreground">Status</p>
-            <p className="mt-1 text-sm font-medium">{values.status || '—'}</p>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
-          <p className="text-xs uppercase text-muted-foreground">Description</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {values.description ? values.description : '—'}
-          </p>
-        </div>
-
-        <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
-          <p className="text-xs uppercase text-muted-foreground">Detailed Notes</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {cleanNotes ? cleanNotes.slice(0, 220) + (cleanNotes.length > 220 ? '…' : '') : 'No additional notes provided.'}
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
-            <p className="text-xs uppercase text-muted-foreground">Tags</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {values.tags ? values.tags : '—'}
-            </p>
-          </div>
-          <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
-            <p className="text-xs uppercase text-muted-foreground">Topology Image</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {uploadedTopologyUrl ? 'Image uploaded' : 'Not provided'}
-            </p>
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <p className="text-sm font-medium text-muted-foreground">Difficulty</p>
+            <p className="mt-2 text-base font-semibold text-foreground">{difficulty || '—'}</p>
           </div>
         </div>
 
-        <div className="rounded-lg border border-white/5 bg-sidebar/40 p-4">
-          <p className="text-xs uppercase text-muted-foreground">Additional Files</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {form.watch('additionalFiles')?.length
-              ? `${form.watch('additionalFiles')!.length} file(s) attached`
-              : 'No additional files attached.'}
-          </p>
+        <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm font-medium text-muted-foreground">Description</p>
+          <p className="text-sm leading-relaxed text-foreground">{plainDescription || 'No description provided.'}</p>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          Submit becomes available shortly—use this time to double-check everything.
-        </p>
+        <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm font-medium text-muted-foreground">Lab Notes</p>
+          <p className="text-sm leading-relaxed text-foreground">{plainNotes || 'No lab notes added.'}</p>
+        </div>
+
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm font-medium text-muted-foreground">Tags</p>
+          {parsedTags.length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {parsedTags.map(tag => (
+                <Badge key={tag} variant="secondary">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">No tags added.</p>
+          )}
+        </div>
+
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm font-medium text-muted-foreground">Topology Image</p>
+          {uploadedTopologyUrl ? (
+            <a
+              href={uploadedTopologyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
+            >
+              View uploaded topology
+            </a>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">No topology image uploaded.</p>
+          )}
+        </div>
+
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm font-medium text-muted-foreground">Additional Files</p>
+          {files.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {files.map((file, index) => {
+                const fileName = typeof file?.name === 'string' ? file.name : `File ${index + 1}`;
+                return (
+                  <Badge key={`${fileName}-${index}`} variant="outline" className="text-xs font-medium">
+                    {fileName}
+                  </Badge>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">No additional files selected.</p>
+          )}
+        </div>
       </div>
     );
   };
@@ -733,17 +781,20 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
             heading: 'Classification',
             description: 'Group your lab by type and difficulty.',
           });
-      case 4:
-        return renderFilesSection({
-          heading: 'Files & Resources',
-          description: 'Attach media and files that support your lab execution.',
-        });
+        case 4:
+          return renderFilesSection({
+            heading: 'Files & Resources',
+            description: 'Attach media and files that support your lab execution.',
+          });
         case 5:
-          return renderReviewSection();
-      default:
-        return null;
+          return renderReviewSection({
+            heading: 'Review & Confirm',
+            description: 'Make sure everything looks correct before uploading your lab.',
+          });
+        default:
+          return null;
+      }
     }
-  }
 
     switch (currentStep) {
       case 1:
@@ -752,6 +803,8 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
         return renderClassificationSection();
       case 3:
         return renderFilesSection();
+      case 4:
+        return renderReviewSection();
       default:
         return null;
     }
@@ -759,34 +812,33 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
 
   const stepTitles =
     variant === 'modal'
-      ? ['Lab Overview', 'Detailed Notes & Tags', 'Classification', 'Files & Resources', 'Review & Submit']
-      : ['Basic Information', 'Classification', 'Files & Resources'];
+      ? ['Lab Overview', 'Detailed Notes & Tags', 'Classification', 'Files & Resources', 'Review & Confirm']
+      : ['Basic Information', 'Classification', 'Files & Resources', 'Review & Confirm'];
   const activeStep = Math.min(currentStep, totalFormSteps);
   const isSuccessStep = currentStep === successStep;
   const activeStepTitle = isSuccessStep ? 'Upload Complete' : stepTitles[activeStep - 1] ?? '';
   const progressValue = (activeStep / totalFormSteps) * 100;
-  const selectContentClassName = variant === 'modal' ? 'z-[11000]' : undefined;
 
   if (currentStep === successStep) {
     return (
       <div
         className={
           variant === 'modal'
-            ? 'mx-auto w-full max-w-[1000px]'
+            ? 'mx-auto w-full max-w-3xl'
             : 'container mx-auto px-4 py-8 sm:px-6'
         }
       >
         <Card
-        className={
-          variant === 'modal'
-            ? 'mx-auto border-white/5 bg-sidebar/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 rounded-xl sm:rounded-2xl'
-            : 'mx-auto max-w-md'
-        }
-      >
-        <CardContent className={variant === 'modal' ? 'px-4 py-6 sm:px-6 sm:py-8' : 'pt-6'}>{renderStepContent()}</CardContent>
-      </Card>
-    </div>
-  );
+          className={
+            variant === 'modal'
+              ? 'mx-auto border-white/5 bg-sidebar/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-sidebar/60'
+              : 'mx-auto max-w-md'
+          }
+        >
+          <CardContent className={variant === 'modal' ? 'px-6 py-8' : 'pt-6'}>{renderStepContent()}</CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (isPending) {
@@ -799,20 +851,20 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
         }
       >
         <Card
-        className={
-          variant === 'modal'
-            ? 'border-white/5 bg-sidebar/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 rounded-xl sm:rounded-2xl'
-            : 'mx-auto max-w-md'
-        }
-      >
-        <CardHeader className={variant === 'modal' ? 'px-4 py-5 sm:px-6' : undefined}>
-          <CardTitle>Loading...</CardTitle>
-          <CardDescription>Checking your session</CardDescription>
-        </CardHeader>
-        <CardContent className={variant === 'modal' ? 'px-4 py-5 sm:px-6' : undefined}>
-          <Progress value={30} className="w-full" />
-        </CardContent>
-      </Card>
+          className={
+            variant === 'modal'
+              ? 'border-white/5 bg-sidebar/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-sidebar/60'
+              : 'mx-auto max-w-md'
+          }
+        >
+          <CardHeader className={variant === 'modal' ? 'px-6 py-5' : undefined}>
+            <CardTitle>Loading...</CardTitle>
+            <CardDescription>Checking your session</CardDescription>
+          </CardHeader>
+          <CardContent className={variant === 'modal' ? 'px-6 py-5' : undefined}>
+            <Progress value={30} className="w-full" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -827,21 +879,21 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
         }
       >
         <Card
-        className={
-          variant === 'modal'
-            ? 'border-white/5 bg-sidebar/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 rounded-xl sm:rounded-2xl'
-            : 'mx-auto max-w-xl'
-        }
-      >
-        <CardHeader className={variant === 'modal' ? 'px-4 py-5 sm:px-6' : undefined}>
-          <CardTitle>Sign in required</CardTitle>
-          <CardDescription>You need to be signed in to upload a lab.</CardDescription>
-        </CardHeader>
-        <CardContent className={variant === 'modal' ? 'px-4 py-5 sm:px-6' : undefined}>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button asChild className="h-11 w-full sm:w-auto">
-              <Link href="/sign-in">Sign In</Link>
-            </Button>
+          className={
+            variant === 'modal'
+              ? 'border-white/5 bg-sidebar/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-sidebar/60'
+              : 'mx-auto max-w-xl'
+          }
+        >
+          <CardHeader className={variant === 'modal' ? 'px-6 py-5' : undefined}>
+            <CardTitle>Sign in required</CardTitle>
+            <CardDescription>You need to be signed in to upload a lab.</CardDescription>
+          </CardHeader>
+          <CardContent className={variant === 'modal' ? 'px-6 py-5' : undefined}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button asChild className="h-11 w-full sm:w-auto">
+                <Link href="/sign-in">Sign In</Link>
+              </Button>
               <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
                 <Link href="/sign-up">Create Account</Link>
               </Button>
@@ -854,19 +906,19 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
 
   return (
     <div
+      className={
+        variant === 'modal'
+          ? 'mx-auto w-full'
+          : 'container mx-auto px-4 py-8 sm:px-6'
+      }
+    >
+      <div
         className={
           variant === 'modal'
-            ? 'mx-auto w-full max-w-[1100px] px-0'
-            : 'container mx-auto px-4 py-8 sm:px-6'
+            ? 'mx-auto w-full space-y-2'
+            : 'mx-auto max-w-2xl px-4 sm:px-0'
         }
       >
-        <div
-          className={
-            variant === 'modal'
-              ? 'mx-auto w-full max-w-[1000px] space-y-6 px-0'
-              : 'mx-auto max-w-2xl px-4 sm:px-0'
-          }
-        >
         {/* Progress Bar */}
         <div className={variant === 'modal' ? 'mb-6' : 'mb-8'}>
           <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -881,7 +933,7 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
         <Card
           className={
             variant === 'modal'
-              ? 'border-white/5 bg-sidebar/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 rounded-xl sm:rounded-2xl'
+              ? 'border-white/5 bg-sidebar/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-sidebar/60'
               : undefined
           }
         >
@@ -895,7 +947,7 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
                 : 'Share your networking knowledge with the community'}
             </CardDescription>
           </CardHeader> */}
-          <CardContent className={variant === 'modal' ? 'px-4 py-4 sm:px-6 sm:py-2' : 'px-4 py-4 sm:px-6 sm:py-2'}>
+          <CardContent className={variant === 'modal' ? 'px-6 py-2' : 'px-4 py-4 sm:px-6 sm:py-2'}>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 {renderStepContent()}
@@ -920,15 +972,7 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     ) : (
-                      <Button
-                        type="submit"
-                        className="h-11 w-full sm:w-auto"
-                        disabled={
-                          isSubmitting ||
-                          isTopologyUploading ||
-                          (variant === 'modal' && currentStep === totalFormSteps && isReviewDelayActive)
-                        }
-                      >
+                      <Button type="submit" className="h-11 w-full sm:w-auto" disabled={isSubmitting}>
                         {isSubmitting ? (
                           <>
                             <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white" />
@@ -943,17 +987,6 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
                       </Button>
                     )}
                   </div>
-                )}
-
-                {isTopologyUploading && (
-                  <p className="text-sm text-muted-foreground">
-                    Topology image upload in progress. Please wait until it finishes before submitting.
-                  </p>
-                )}
-                {variant === 'modal' && currentStep === totalFormSteps && isReviewDelayActive && (
-                  <p className="text-sm text-muted-foreground">
-                    Preparing submission... Submit will unlock in approximately {reviewDelayRemaining}s.
-                  </p>
                 )}
 
                 {/* Upload Progress */}

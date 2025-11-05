@@ -27,12 +27,11 @@ type NavItem = {
 
 interface NavMainProps {
   items: NavItem[]
-  onQuickCreate: () => void
   activeView?: DashboardViewKey
   onSelectView?: (view: DashboardViewKey) => void
 }
 
-export function NavMain({ items, onQuickCreate, activeView, onSelectView }: NavMainProps) {
+export function NavMain({ items, activeView, onSelectView }: NavMainProps) {
   const pathname = usePathname()
   const { openQuickUpload } = useModalManager()
 
@@ -70,7 +69,8 @@ export function NavMain({ items, onQuickCreate, activeView, onSelectView }: NavM
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
               tooltip="Quick Create"
-              onClick={onQuickCreate}
+              type="button"
+              onClick={openQuickUpload}
               className="min-w-8 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground transition-all duration-150"
             >
               <IconCirclePlusFilled className="size-4" />
@@ -81,12 +81,7 @@ export function NavMain({ items, onQuickCreate, activeView, onSelectView }: NavM
               type="button"
               className="size-8 group-data-[collapsible=icon]:opacity-0"
               variant="outline"
-              onClick={() => {
-                if (onSelectView) {
-                  onSelectView("upload")
-                }
-                openQuickUpload()
-              }}
+              onClick={openQuickUpload}
             >
               <IconUpload className="size-4" />
               <span className="sr-only">Open quick upload modal</span>

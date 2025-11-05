@@ -14,23 +14,30 @@ import {
 export function QuickUploadModal() {
   const { quickUploadOpen, setQuickUploadOpen } = useModalManager();
 
-  return (        
+  return (
     <Dialog open={quickUploadOpen} onOpenChange={setQuickUploadOpen}>
       <DialogContent
         className={cn(
-          'z-[9999] mx-2 flex h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-full flex-col overflow-y-auto border border-white/5 bg-sidebar text-sidebar-foreground p-0',
-          'rounded-xl shadow-xl sm:mx-0 sm:h-auto sm:max-h-[90vh] sm:w-full lg:max-w-[1100px] sm:flex-1 sm:overflow-visible sm:rounded-2xl',
-          'backdrop-blur supports-[backdrop-filter]:bg-sidebar/70',
+          // 📱 Mobile: fullscreen dan reset transform Radix agar tidak geser
+          'fixed inset-0 left-0 top-0 z-[9999] m-0 flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col overflow-hidden overscroll-contain',
+          // 🌫️ Glassmorphism
+          'bg-white/5 dark:bg-[#020618]/2 text-sidebar-foreground backdrop-blur-xl supports-[backdrop-filter]:bg-white/10',
+          'border border-white/5 ring-1 ring-white/15 shadow-2xl transition-all duration-300 ease-in-out',
+          // 💻 Desktop: boxed modal di tengah layar
+          'sm:inset-auto sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-[1100px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl'
         )}
       >
-        <DialogHeader className="space-y-1 border-b border-white/5 bg-sidebar/80 px-6 py-4 backdrop-blur">
-          <DialogTitle className="text-xl font-semibold">Quick Upload Lab</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
+        {/* 🔹 Header Sticky */}
+        <DialogHeader className="sticky rounded-2xl top-0 z-10 space-y-1 border-b border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl sm:px-6 sm:py-4">
+          <DialogTitle className="text-base sm:text-xl font-semibold">Quick Upload Lab</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
             Access the full lab upload workflow without leaving your dashboard.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 px-4 py-4 sm:px-6 sm:py-6">
+        {/* 🔹 Form Container (Scroll Area) */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 pb-[max(env(safe-area-inset-bottom),0px)]">
+          {/* Memanggil ulang UploadPage dengan variant modal agar form + step logic tetap aktif */}
           <UploadPage variant="modal" />
         </div>
       </DialogContent>

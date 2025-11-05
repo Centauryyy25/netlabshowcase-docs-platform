@@ -15,13 +15,11 @@ import {
   IconListDetails,
   IconSearch,
   IconSettings,
-  IconUpload,
   type Icon,
 } from "@tabler/icons-react"
 
 import type { DashboardViewKey } from "@/app/dashboard/DashboardViewContext"
 import { useDashboardView } from "@/app/dashboard/DashboardViewContext"
-import { QuickCreateLabModal } from "@/components/quick-create-lab-modal"
 import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
@@ -135,7 +133,6 @@ const secondaryNavigation: SecondaryNavigationItem[] = [
 function AppSidebarComponent({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession()
   const { activeView, setActiveView } = useDashboardView()
-  const [isQuickCreateOpen, setIsQuickCreateOpen] = React.useState(false)
 
   const userData = session?.user
     ? {
@@ -174,7 +171,6 @@ function AppSidebarComponent({ ...props }: React.ComponentProps<typeof Sidebar>)
         <SidebarContent>
           <NavMain
             items={mainNavigation}
-            onQuickCreate={() => setIsQuickCreateOpen(true)}
             activeView={activeView}
             onSelectView={handleSelectView}
           />
@@ -189,7 +185,6 @@ function AppSidebarComponent({ ...props }: React.ComponentProps<typeof Sidebar>)
           <NavUser user={userData} />
         </SidebarFooter>
       </Sidebar>
-      <QuickCreateLabModal open={isQuickCreateOpen} onOpenChange={setIsQuickCreateOpen} />
     </>
   )
 }

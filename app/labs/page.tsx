@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { LabCard } from "@/components/lab-card";
 import { Input } from "@/components/ui/input";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,7 +56,7 @@ const categories = [
 
 const difficulties = ["All", "Beginner", "Intermediate", "Advanced"] as const;
 
-function LabsPageContent() {
+function LabsPageClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -366,15 +367,14 @@ function LabsPageContent() {
   );
 }
 
-function LabsPageSkeleton() {
+function LabsPageSuspenseFallback() {
   return (
-    <div className="min-h-screen bg-white dark:bg-[#050f24]">
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-        <Skeleton className="h-5 w-44" />
-        <Skeleton className="h-10 w-64" />
+    <div className="px-4 py-16 sm:px-6">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <div className="h-6 w-28 rounded-md bg-muted/30" />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-72 rounded-2xl" />
+            <Skeleton key={index} className="h-64 rounded-xl" />
           ))}
         </div>
       </div>
@@ -384,8 +384,8 @@ function LabsPageSkeleton() {
 
 export default function LabsPage() {
   return (
-    <Suspense fallback={<LabsPageSkeleton />}>
-      <LabsPageContent />
+    <Suspense fallback={<LabsPageSuspenseFallback />}>
+      <LabsPageClient />
     </Suspense>
   );
 }
