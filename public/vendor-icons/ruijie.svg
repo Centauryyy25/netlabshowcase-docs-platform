@@ -1,0 +1,42 @@
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="72" height="72" rx="16" fill="url(#paint0_linear_rui)" />
+  <path
+    d="M18 46L31 26H44L54 46"
+    stroke="white"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-opacity="0.85"
+  />
+  <path
+    d="M25 46C28 38 32 32 36 32C40 32 44 38 47 46"
+    stroke="white"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-opacity="0.8"
+  />
+  <text
+    x="36"
+    y="58"
+    font-size="13"
+    font-weight="700"
+    text-anchor="middle"
+    fill="white"
+    font-family="Inter, Arial, sans-serif"
+  >
+    RUIJIE
+  </text>
+  <defs>
+    <linearGradient
+      id="paint0_linear_rui"
+      x1="0"
+      y1="0"
+      x2="72"
+      y2="72"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#7C3AED" />
+      <stop offset="1" stop-color="#EC4899" />
+    </linearGradient>
+  </defs>
+</svg>

@@ -13,11 +13,28 @@ import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
+import { Table } from '@tiptap/extension-table';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import TableRow from '@tiptap/extension-table-row';
 import Suggestion, { SuggestionOptions } from '@tiptap/suggestion';
 import { Extension, type Range, type Editor as TiptapEditor } from '@tiptap/core';
 import DOMPurify from 'isomorphic-dompurify';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Command, CommandItem, CommandList } from '@/components/ui/command';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { SuggestionKeyDownProps, SuggestionProps } from '@tiptap/suggestion';
@@ -36,6 +53,8 @@ import {
   Minus,
   CheckSquare,
   Link as LinkIcon,
+  Link2,
+  Table as TableIcon,
   Plus,
   Slash,
   GripVertical,
@@ -62,57 +81,96 @@ type SlashCommandListProps = {
   onHighlight: (index: number) => void;
 };
 
+type RequestImageUrlHandler = (params: { apply: (url: string) => void }) => void;
+type LinkDialogMode = 'link' | 'embed';
+type LinkDialogState = {
+  open: boolean;
+  value: string;
+  allowUnset: boolean;
+  mode: LinkDialogMode;
+};
+type RequestLinkUrlHandler = (params: {
+  initialValue: string | null;
+  allowUnset: boolean;
+  mode?: LinkDialogMode;
+  apply: (url: string | null) => void;
+}) => void;
+
+const defaultRequestImageUrl: RequestImageUrlHandler = ({ apply }) => {
+  if (typeof window === 'undefined') return;
+  const url = window.prompt('Enter image URL');
+  if (!url) return;
+  apply(url);
+};
+
+const defaultRequestLinkUrl: RequestLinkUrlHandler = ({ initialValue, allowUnset, mode = 'link', apply }) => {
+  if (typeof window === 'undefined') return;
+  const promptMessage = mode === 'embed' ? 'Enter an embed URL' : 'Enter URL';
+  const url = window.prompt(promptMessage, initialValue ?? '');
+  if (url === null) return;
+  if (url.trim() === '') {
+    if (allowUnset) {
+      apply(null);
+    }
+    return;
+  }
+  apply(url.trim());
+};
+
+let requestImageUrl: RequestImageUrlHandler = defaultRequestImageUrl;
+let requestLinkUrl: RequestLinkUrlHandler = defaultRequestLinkUrl;
+
 const SlashCommandItems: SlashCommandItem[] = [
   {
     title: 'Text',
-    description: 'Start typing with a paragraph block',
+    description: 'Start with a plain paragraph block',
     icon: Text,
-    keywords: ['paragraph', 'p'],
+    keywords: ['paragraph', 'p', 'plain', 'text'],
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setParagraph().run();
     },
   },
   {
     title: 'Heading 1',
-    description: 'Large section heading',
+    description: 'Create a large section heading',
     icon: Heading1,
-    keywords: ['h1', 'heading'],
+    keywords: ['h1', 'heading', 'title'],
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setHeading({ level: 1 }).run();
     },
   },
   {
     title: 'Heading 2',
-    description: 'Sub-section heading',
+    description: 'Create a medium section heading',
     icon: Heading2,
-    keywords: ['h2', 'heading'],
+    keywords: ['h2', 'heading', 'subtitle'],
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setHeading({ level: 2 }).run();
     },
   },
   {
     title: 'Heading 3',
-    description: 'Small section heading',
+    description: 'Create a small section heading',
     icon: Heading3,
-    keywords: ['h3', 'heading'],
+    keywords: ['h3', 'heading', 'subheading'],
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setHeading({ level: 3 }).run();
     },
   },
   {
-    title: 'Code',
-    description: 'Inline code for quick snippets',
-    icon: Code,
-    keywords: ['code', 'inline'],
+    title: 'Quote',
+    description: 'Capture a memorable quote',
+    icon: Quote,
+    keywords: ['blockquote', 'quote'],
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleCode().run();
+      editor.chain().focus().deleteRange(range).toggleBlockquote().run();
     },
   },
   {
-    title: 'Todo List',
+    title: 'Checklist',
     description: 'Track tasks with checkboxes',
     icon: CheckSquare,
-    keywords: ['todo', 'task'],
+    keywords: ['todo', 'task', 'checkbox'],
     command: ({ editor, range }) => {
       editor
         .chain()
@@ -141,30 +199,31 @@ const SlashCommandItems: SlashCommandItem[] = [
     },
   },
   {
-    title: 'Quote',
-    description: 'Capture a quote',
-    icon: Quote,
-    keywords: ['blockquote'],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleBlockquote().run();
-    },
-  },
-  {
     title: 'Code Block',
-    description: 'Capture a code snippet',
+    description: 'Capture a multi-line code snippet',
     icon: Code,
-    keywords: ['code'],
+    keywords: ['code', 'snippet', 'pre'],
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
     },
   },
   {
+    title: 'Inline Code',
+    description: 'Highlight short code inline',
+    icon: Code,
+    keywords: ['code', 'inline'],
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).toggleCode().run();
+    },
+  },
+  {
     title: 'Divider',
-    description: 'Insert a horizontal divider',
+    description: 'Visually separate sections',
     icon: Minus,
     keywords: ['hr', 'divider', 'horizontal'],
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setHorizontalRule().run();
+      editor.commands.enter();
     },
   },
   {
@@ -174,26 +233,98 @@ const SlashCommandItems: SlashCommandItem[] = [
     keywords: ['image', 'media', 'photo'],
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).run();
-      const url = window.prompt('Enter image URL');
-      if (!url) return;
-      editor.chain().focus().setImage({ src: url }).run();
+      requestImageUrl({
+        apply: (url) => {
+          if (!url) return;
+          editor.chain().focus().setImage({ src: url }).run();
+          editor.commands.enter();
+        },
+      });
+    },
+  },
+  {
+    title: 'Table',
+    description: 'Insert a 3 x 3 table layout',
+    icon: TableIcon,
+    keywords: ['table', 'grid', 'rows', 'columns'],
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+        .run();
+    },
+  },
+  {
+    title: 'Embed Link',
+    description: 'Preview external content from a URL',
+    icon: Link2,
+    keywords: ['embed', 'link', 'preview', 'external'],
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).run();
+      requestLinkUrl({
+        initialValue: '',
+        allowUnset: false,
+        mode: 'embed',
+        apply: (url) => {
+          if (!url) {
+            return;
+          }
+          const resolved = url.trim();
+          if (!resolved) {
+            return;
+          }
+          editor
+            .chain()
+            .focus()
+            .insertContent([
+              {
+                type: 'paragraph',
+                content: [
+                  {
+                    type: 'text',
+                    text: resolved,
+                    marks: [
+                      {
+                        type: 'link',
+                        attrs: {
+                          href: resolved,
+                          target: '_blank',
+                          rel: 'noopener noreferrer',
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ])
+            .run();
+          editor.commands.enter();
+        },
+      });
     },
   },
   {
     title: 'Link',
-    description: 'Insert or edit a link',
+    description: 'Attach a link to the selected text',
     icon: LinkIcon,
-    keywords: ['link', 'a', 'anchor'],
+    keywords: ['link', 'anchor', 'url'],
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).run();
       const previousUrl = editor.getAttributes('link').href as string | null;
-      const url = window.prompt('Enter URL', previousUrl ?? '');
-      if (url === null) return;
-      if (url === '') {
-        editor.chain().focus().extendMarkRange('link').unsetLink().run();
-        return;
-      }
-      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+      requestLinkUrl({
+        initialValue: previousUrl,
+        allowUnset: Boolean(previousUrl),
+        mode: 'link',
+        apply: (url) => {
+          if (!url) {
+            editor.chain().focus().extendMarkRange('link').unsetLink().run();
+            return;
+          }
+          editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+        },
+      });
     },
   },
 ];
@@ -204,44 +335,81 @@ const SlashCommandList = ({
   onSelect,
   onHighlight,
 }: SlashCommandListProps) => {
-  if (!items.length) {
-    return (
-      <div className="rounded-md border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md">
-        Type to search commands…
-      </div>
-    );
-  }
+  const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  useEffect(() => {
+    itemRefs.current = itemRefs.current.slice(0, items.length);
+  }, [items]);
+
+  useEffect(() => {
+    const activeNode = itemRefs.current[selectedIndex];
+    if (activeNode) {
+      activeNode.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [selectedIndex, items]);
 
   return (
-    <div className="w-64 rounded-md border bg-popover shadow-xl">
-      <ul className="p-1">
-        {items.map((item, index) => {
-          const Icon = item.icon;
-          const isActive = index === selectedIndex;
-          return (
-            <li key={item.title}>
-              <button
-                type="button"
-                className={cn(
-                  'flex w-full items-start gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-muted',
-                  isActive && 'bg-muted'
-                )}
-                onMouseDown={(event) => {
-                  event.preventDefault();
-                  onSelect(index);
-                }}
-                onMouseEnter={() => onHighlight(index)}
-              >
-                <Icon className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <span className="space-y-0.5">
-                  <span className="block font-medium text-foreground">{item.title}</span>
-                  <span className="block text-xs text-muted-foreground">{item.description}</span>
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+    <div
+      className={cn(
+        'z-50 min-w-[260px] max-w-[320px] rounded-xl border border-border/60 bg-popover p-2 shadow-lg backdrop-blur-md',
+        'motion-safe:animate-in fade-in slide-in-from-top-2'
+      )}
+    >
+      <Command shouldFilter={false} className="bg-transparent p-0 text-foreground">
+        <ScrollArea className="max-h-64 overflow-y-auto px-1">
+          <CommandList className="flex flex-col gap-1 p-1">
+            {items.length === 0 ? (
+              <div className="px-3 py-5 text-center text-sm text-muted-foreground">
+                Tidak ada command yang cocok.
+              </div>
+            ) : (
+              items.map((item, index) => {
+                const Icon = item.icon;
+                const isActive = index === selectedIndex;
+                return (
+                  <CommandItem
+                    key={item.title}
+                    value={item.title}
+                    ref={(element) => {
+                      itemRefs.current[index] = element;
+                    }}
+                    data-selected={isActive}
+                    className={cn(
+                      'group flex w-full items-start gap-3 rounded-lg px-3 py-2 text-left text-sm transition-all duration-150',
+                      'hover:bg-accent hover:text-accent-foreground',
+                      isActive && 'bg-accent text-accent-foreground'
+                    )}
+                    onSelect={() => onSelect(index)}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                    }}
+                    onMouseEnter={() => onHighlight(index)}
+                  >
+                    <Icon
+                      className={cn(
+                        'mt-0.5 h-4 w-4 text-muted-foreground transition-colors',
+                        isActive && 'text-accent-foreground',
+                        'group-hover:text-accent-foreground'
+                      )}
+                    />
+                    <span className="flex flex-col">
+                      <span className="font-medium leading-none">{item.title}</span>
+                      <span
+                        className={cn(
+                          'text-xs text-muted-foreground transition-colors group-hover:text-accent-foreground/80',
+                          isActive && 'text-accent-foreground/80'
+                        )}
+                      >
+                        {item.description}
+                      </span>
+                    </span>
+                  </CommandItem>
+                );
+              })
+            )}
+          </CommandList>
+        </ScrollArea>
+      </Command>
     </div>
   );
 };
@@ -257,16 +425,16 @@ const slashCommand = Extension.create({
         items: ({ query }: { query: string }) => {
           const normalizedQuery = query.trim().toLowerCase();
           if (!normalizedQuery) {
-            return SlashCommandItems.slice(0, 6);
+            return SlashCommandItems;
           }
-          return SlashCommandItems
-            .filter((item) => {
-              if (item.title.toLowerCase().includes(normalizedQuery)) {
-                return true;
-              }
-              return item.keywords?.some((keyword) => keyword.includes(normalizedQuery));
-            })
-            .slice(0, 6);
+          return SlashCommandItems.filter((item) => {
+            const titleMatch = item.title.toLowerCase().includes(normalizedQuery);
+            const descriptionMatch = item.description.toLowerCase().includes(normalizedQuery);
+            const keywordMatch = item.keywords?.some((keyword) =>
+              keyword.toLowerCase().includes(normalizedQuery)
+            );
+            return titleMatch || descriptionMatch || keywordMatch;
+          });
         },
         command: ({ editor, range, props }) => {
           const payload = (props as { item?: SlashCommandItem })?.item ?? (props as SlashCommandItem | undefined);
@@ -291,6 +459,20 @@ const slashCommand = Extension.create({
           let items: SlashCommandItem[] = [];
           let command: ((item: SlashCommandItem) => void) | null = null;
 
+          const handleSelect = (index: number) => {
+            if (!items.length || !command) return;
+            const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
+            const item = items[clampedIndex];
+            if (item) {
+              command(item);
+            }
+          };
+
+          const handleHighlight = (index: number) => {
+            selectedIndex = index;
+            updateComponentProps();
+          };
+
           const destroy = () => {
             component?.destroy();
             component = null;
@@ -300,20 +482,43 @@ const slashCommand = Extension.create({
             }
             items = [];
             command = null;
+            selectedIndex = 0;
           };
 
           const updateComponentProps = () => {
             component?.updateProps({
               items,
               selectedIndex,
+              onSelect: handleSelect,
+              onHighlight: handleHighlight,
             });
           };
 
           const updatePosition = (props: SuggestionProps<SlashCommandItem>) => {
             const rect = props.clientRect?.();
             if (!popup || !rect) return;
-            popup.style.left = `${rect.left}px`;
-            popup.style.top = `${rect.bottom + 8}px`;
+            const viewportPadding = 12;
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const popupRect = popup.getBoundingClientRect();
+            const popupWidth = popupRect.width || popup.offsetWidth;
+            const popupHeight = popupRect.height || popup.offsetHeight;
+
+            const clamp = (value: number, min: number, max: number) =>
+              Math.min(Math.max(value, min), max);
+
+            const maxLeft = viewportWidth - popupWidth - viewportPadding;
+            const left = clamp(rect.left, viewportPadding, Math.max(viewportPadding, maxLeft));
+
+            const maxTop = viewportHeight - popupHeight - viewportPadding;
+            let preferredTop = rect.bottom + 8;
+            if (preferredTop + popupHeight + viewportPadding > viewportHeight) {
+              preferredTop = rect.top - popupHeight - 8;
+            }
+            const top = clamp(preferredTop, viewportPadding, Math.max(viewportPadding, maxTop));
+
+            popup.style.left = `${left}px`;
+            popup.style.top = `${top}px`;
           };
 
           return {
@@ -331,18 +536,8 @@ const slashCommand = Extension.create({
                 props: {
                   items,
                   selectedIndex,
-                  onSelect: (index: number) => {
-                    if (!items.length || !command) return;
-                    const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
-                    const item = items[clampedIndex];
-                    if (item) {
-                      command(item);
-                    }
-                  },
-                  onHighlight: (index: number) => {
-                    selectedIndex = index;
-                    updateComponentProps();
-                  },
+                  onSelect: handleSelect,
+                  onHighlight: handleHighlight,
                 },
                 editor: props.editor,
               });
@@ -364,12 +559,18 @@ const slashCommand = Extension.create({
               command = props.command;
 
               if (!items.length) {
-                destroy();
+                selectedIndex = 0;
+                updateComponentProps();
+                updatePosition(props);
                 return;
               }
 
               if (selectedIndex >= items.length) {
                 selectedIndex = items.length - 1;
+              }
+
+              if (selectedIndex < 0) {
+                selectedIndex = 0;
               }
 
               updateComponentProps();
@@ -448,6 +649,101 @@ export default function NotionEditor({
     top: 0,
   });
   const [blockMenuMode, setBlockMenuMode] = useState<'quick' | 'actions' | null>(null);
+  const linkActionRef = useRef<(value: string | null) => void>(() => {});
+  const imageActionRef = useRef<(value: string) => void>(() => {});
+  const [linkDialogState, setLinkDialogState] = useState<LinkDialogState>({
+    open: false,
+    value: '',
+    allowUnset: false,
+    mode: 'link',
+  });
+  const [imageDialogState, setImageDialogState] = useState<{ open: boolean; value: string }>({
+    open: false,
+    value: '',
+  });
+
+  const openImageDialog = useCallback((initialValue: string | null, apply: (url: string) => void) => {
+    imageActionRef.current = apply;
+    setImageDialogState({ open: true, value: initialValue ?? '' });
+  }, []);
+
+  const openLinkDialog = useCallback(
+    ({
+      initialValue,
+      allowUnset,
+      mode = 'link',
+      apply,
+    }: {
+      initialValue: string | null;
+      allowUnset: boolean;
+      mode?: LinkDialogMode;
+      apply: (url: string | null) => void;
+    }) => {
+      linkActionRef.current = apply;
+      setLinkDialogState({ open: true, value: initialValue ?? '', allowUnset, mode });
+    },
+    []
+  );
+
+  const handleImageDialogOpenChange = useCallback((open: boolean) => {
+    setImageDialogState((prev) => ({ ...prev, open }));
+  }, []);
+
+  const handleLinkDialogOpenChange = useCallback((open: boolean) => {
+    setLinkDialogState((prev) => ({ ...prev, open }));
+  }, []);
+
+  const handleConfirmImage = useCallback(() => {
+    const trimmed = imageDialogState.value.trim();
+    if (!trimmed) {
+      toast.error('Image URL is required.');
+      return;
+    }
+    imageActionRef.current(trimmed);
+    setImageDialogState((prev) => ({ ...prev, open: false }));
+  }, [imageDialogState.value]);
+
+  const handleConfirmLink = useCallback(() => {
+    const trimmed = linkDialogState.value.trim();
+    if (!trimmed) {
+      toast.error('Link URL is required.');
+      return;
+    }
+    linkActionRef.current(trimmed);
+    setLinkDialogState((prev) => ({ ...prev, open: false }));
+  }, [linkDialogState.value]);
+
+  const handleRemoveLink = useCallback(() => {
+    linkActionRef.current(null);
+    setLinkDialogState((prev) => ({ ...prev, open: false }));
+  }, []);
+
+  const customRequestImageUrl = useCallback<RequestImageUrlHandler>(
+    ({ apply }) => {
+      openImageDialog(null, apply);
+    },
+    [openImageDialog]
+  );
+
+  const customRequestLinkUrl = useCallback<RequestLinkUrlHandler>(
+    ({ initialValue, allowUnset, mode = 'link', apply }) => {
+      openLinkDialog({ initialValue, allowUnset, mode, apply });
+    },
+    [openLinkDialog]
+  );
+
+  useEffect(() => {
+    requestImageUrl = customRequestImageUrl;
+    requestLinkUrl = customRequestLinkUrl;
+    return () => {
+      if (requestImageUrl === customRequestImageUrl) {
+        requestImageUrl = defaultRequestImageUrl;
+      }
+      if (requestLinkUrl === customRequestLinkUrl) {
+        requestLinkUrl = defaultRequestLinkUrl;
+      }
+    };
+  }, [customRequestImageUrl, customRequestLinkUrl]);
 
   const extensions = useMemo(() => {
     const base = [
@@ -473,6 +769,22 @@ export default function NotionEditor({
       Image.configure({
         inline: false,
         allowBase64: false,
+      }),
+      Table.configure({
+        HTMLAttributes: {
+          class: 'tiptap-table w-full overflow-hidden rounded-lg border border-border bg-background text-sm',
+        },
+      }),
+      TableRow,
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: 'bg-muted/60 px-3 py-2 text-left font-medium uppercase tracking-wide text-xs',
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: 'px-3 py-2 align-top',
+        },
       }),
     ];
 
@@ -730,7 +1042,8 @@ export default function NotionEditor({
   };
 
   return (
-    <Card
+    <>
+      <Card
       className={cn(
         'relative overflow-visible border border-white/10 bg-slate-950/70 backdrop-blur-sm shadow-2xl ring-1 ring-white/5',
         className
@@ -956,6 +1269,86 @@ export default function NotionEditor({
           </Button>
         </div>
       )}
-    </Card>
+      </Card>
+
+      <AlertDialog open={linkDialogState.open} onOpenChange={handleLinkDialogOpenChange}>
+        <AlertDialogContent className="bg-white dark:bg-slate-950">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {linkDialogState.mode === 'embed'
+                ? 'Embed link'
+                : linkDialogState.allowUnset
+                  ? 'Update link'
+                  : 'Insert link'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {linkDialogState.mode === 'embed'
+                ? 'Paste the URL to embed inside the document.'
+                : 'Paste the URL that should be attached to the selected text.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Input
+              autoFocus
+              type="url"
+              placeholder={
+                linkDialogState.mode === 'embed'
+                  ? 'https://example.com/embed'
+                  : 'https://example.com'
+              }
+              value={linkDialogState.value}
+              onChange={(event) =>
+                setLinkDialogState((prev) => ({
+                  ...prev,
+                  value: event.target.value,
+                }))
+              }
+            />
+          </div>
+          <AlertDialogFooter>
+            {linkDialogState.allowUnset && (
+              <Button type="button" variant="ghost" onClick={handleRemoveLink}>
+                Remove link
+              </Button>
+            )}
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmLink}>
+              {linkDialogState.mode === 'embed' ? 'Embed link' : 'Save link'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={imageDialogState.open} onOpenChange={handleImageDialogOpenChange}>
+        <AlertDialogContent className="bg-white dark:bg-slate-950">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Embed an image</AlertDialogTitle>
+            <AlertDialogDescription>
+              Provide a direct image URL to insert it into the notes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Input
+              autoFocus
+              type="url"
+              placeholder="https://example.com/topology.png"
+              value={imageDialogState.value}
+              onChange={(event) =>
+                setImageDialogState((prev) => ({
+                  ...prev,
+                  value: event.target.value,
+                }))
+              }
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmImage}>
+              Insert image
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

@@ -1,0 +1,37 @@
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="72" height="72" rx="16" fill="url(#paint0_linear_pa)" />
+  <path
+    d="M20 44L32 28L46 44L52 36"
+    stroke="white"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-opacity="0.85"
+  />
+  <circle cx="32" cy="28" r="4" fill="white" fill-opacity="0.9" />
+  <circle cx="52" cy="36" r="4" fill="white" fill-opacity="0.7" />
+  <text
+    x="36"
+    y="60"
+    font-size="13"
+    font-weight="700"
+    text-anchor="middle"
+    fill="white"
+    font-family="Inter, Arial, sans-serif"
+  >
+    PALO ALTO
+  </text>
+  <defs>
+    <linearGradient
+      id="paint0_linear_pa"
+      x1="0"
+      y1="0"
+      x2="72"
+      y2="72"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#0EA5E9" />
+      <stop offset="1" stop-color="#22D3EE" />
+    </linearGradient>
+  </defs>
+</svg>

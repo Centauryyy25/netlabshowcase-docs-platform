@@ -1,0 +1,42 @@
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="72" height="72" rx="16" fill="url(#paint0_linear_hua)" />
+  <path
+    d="M18 50C22 40 28 30 36 30C44 30 50 40 54 50"
+    stroke="white"
+    stroke-width="3.2"
+    stroke-linecap="round"
+    stroke-opacity="0.8"
+  />
+  <path
+    d="M28 50C30.5 42 33.5 36 36 36C38.5 36 41.5 42 44 50"
+    stroke="white"
+    stroke-width="2.4"
+    stroke-linecap="round"
+    stroke-opacity="0.85"
+  />
+  <circle cx="36" cy="34" r="4" fill="white" fill-opacity="0.9" />
+  <text
+    x="36"
+    y="60"
+    font-size="13"
+    font-weight="700"
+    text-anchor="middle"
+    fill="white"
+    font-family="Inter, Arial, sans-serif"
+  >
+    HUAWEI
+  </text>
+  <defs>
+    <linearGradient
+      id="paint0_linear_hua"
+      x1="0"
+      y1="0"
+      x2="72"
+      y2="72"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#EF4444" />
+      <stop offset="1" stop-color="#F97316" />
+    </linearGradient>
+  </defs>
+</svg>

@@ -156,7 +156,7 @@ function LabsPageClient() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-[#050f24] dark:text-slate-100">
+    <div className="min-h-screen bg-white text-gray-900 dark:bg-black/30 dark:text-slate-100">
       <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
         <Breadcrumb>
           <BreadcrumbList>

@@ -608,6 +608,7 @@ export default function DashboardContent(
                   <Badge variant="secondary" className="flex items-center gap-1 pr-1">
                     Category: {selectedCategoryLabel}
                     <button
+                      suppressHydrationWarning
                       type="button"
                       aria-label="Remove category filter"
                       onClick={() => {
@@ -624,6 +625,7 @@ export default function DashboardContent(
                   <Badge variant="secondary" className="flex items-center gap-1 pr-1">
                     Level: {selectedDifficulty}
                     <button
+                      suppressHydrationWarning
                       type="button"
                       aria-label="Remove difficulty filter"
                       onClick={() => {
@@ -640,6 +642,7 @@ export default function DashboardContent(
                   <Badge variant="secondary" className="flex items-center gap-1 pr-1">
                     Search: &quot;{debouncedSearchTerm}&quot;
                     <button
+                      suppressHydrationWarning
                       type="button"
                       aria-label="Clear search"
                       onClick={() => {
@@ -657,6 +660,7 @@ export default function DashboardContent(
                   <Badge variant="secondary" className="flex items-center gap-1 pr-1">
                     Sort: {SORT_OPTIONS.find((option) => option.value === sortOption)?.label}
                     <button
+                      suppressHydrationWarning
                       type="button"
                       aria-label="Reset sort"
                       onClick={() => {
@@ -673,6 +677,7 @@ export default function DashboardContent(
                   <Badge variant="secondary" className="flex items-center gap-1 pr-1">
                     Topology image
                     <button
+                      suppressHydrationWarning
                       type="button"
                       aria-label="Show all labs"
                       onClick={() => {
@@ -689,6 +694,7 @@ export default function DashboardContent(
                   <Badge key={tagSlug} variant="secondary" className="flex items-center gap-1 pr-1">
                     Tag: {TAG_SLUG_LOOKUP[tagSlug] ?? tagSlug}
                     <button
+                      suppressHydrationWarning
                       type="button"
                       aria-label={`Remove tag ${TAG_SLUG_LOOKUP[tagSlug] ?? tagSlug}`}
                       onClick={() => {

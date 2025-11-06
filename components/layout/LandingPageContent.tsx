@@ -9,7 +9,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Shuffle from "@/components/ui/shadcn-io/shuffle/index";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { MarqueeLabs, type LabPreview } from "@/components/ui/marquee-labs";
 import logo from "@/components/Asset/EtherDocs-Logo.png";
 import { LandingStats } from "@/components/landing/LandingStats";
@@ -187,32 +187,45 @@ function LandingNav() {
                 <span className="sr-only">Toggle navigation</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="bg-white/95 backdrop-blur-xl dark:bg-background/95">
-              <div className="mt-10 flex flex-col gap-6">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-                <div className="mt-4 flex flex-col gap-3">
-                  <Button
-                    asChild
-                    className="rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
-                  >
-                    <Link href="/sign-up">Get Started</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="rounded-xl border-muted-foreground/50 px-5 py-2 text-sm font-medium text-muted-foreground hover:bg-muted/20"
-                  >
-                    <Link href="/sign-in">Sign In</Link>
-                  </Button>
-                </div>
+            <SheetContent
+              side="right"
+              ariaTitle="Mobile navigation"
+              className="bg-white/95 backdrop-blur-xl dark:bg-background/95 flex flex-col"
+            >
+              <SheetHeader className="sr-only">
+                <SheetTitle>Mobile navigation</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-1 flex-col">
+                {/* Navigation Area */}
+                <nav className="mt-16 flex flex-col gap-1 px-4">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="group relative rounded-2xl px-5 py-4 text-base font-medium text-gray-600 transition-all duration-300 hover:translate-x-1 hover:bg-purple-50/80 hover:text-purple-900 dark:text-gray-400 dark:hover:bg-purple-950/30 dark:hover:text-purple-300"
+                    >
+                      <span className="relative z-10">{item.label}</span>
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/0 via-violet-500/0 to-purple-600/0 transition-all duration-300 group-hover:from-purple-500/5 group-hover:via-violet-500/5 group-hover:to-purple-600/5" />
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+
+              {/* Bottom Action Buttons - Fixed at bottom */}
+              <div className="mt-auto space-y-3 border-t border-purple-100/50 bg-gradient-to-t from-purple-50/30 to-transparent p-6 dark:border-purple-900/30 dark:from-purple-950/20">
+                <Button
+                  asChild
+                  className="w-full rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-purple-700 px-6 py-3.5 text-sm font-semibold text-white shadow-xl shadow-purple-500/30 transition-all duration-300 hover:scale-[1.02] hover:from-purple-700 hover:via-violet-700 hover:to-purple-800 hover:shadow-2xl hover:shadow-purple-600/40"
+                >
+                  <Link href="/sign-up">Get Started</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full rounded-2xl border-2 border-purple-200 bg-white/50 px-6 py-3.5 text-sm font-medium text-purple-900 transition-all duration-300 hover:scale-[1.02] hover:border-purple-300 hover:bg-purple-50 dark:border-purple-800 dark:bg-purple-950/20 dark:text-purple-300 dark:hover:border-purple-700 dark:hover:bg-purple-900/30"
+                >
+                  <Link href="/sign-in">Sign In</Link>
+                </Button>
               </div>
             </SheetContent>
           </Sheet>

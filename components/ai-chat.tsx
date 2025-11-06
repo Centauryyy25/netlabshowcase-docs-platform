@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import {
   Select,
   SelectContent,
@@ -246,7 +247,7 @@ export function AiChat({
         const reply =
           typeof data.message === "string" && data.message.trim().length > 0
             ? data.message.trim()
-            : "I couldn’t generate a response. Please try again."
+            : "I couldn't generate a response. Please try again."
 
         typeAssistantMessage(reply)
         setIsLoading(false)
@@ -356,8 +357,13 @@ export function AiChat({
 
   return (
     <TooltipProvider>
-      <Card className={`flex h-full flex-col ${className ?? ""}`}>
-        <CardHeader className="space-y-5 border-b bg-muted/5">
+      <Card
+        className={cn(
+          "relative flex h-full min-h-[520px] flex-col overflow-hidden rounded-[28px] border border-slate-200/70 bg-white/95 shadow-xl shadow-slate-200/40 backdrop-blur-md transition-colors dark:border-slate-800/60 dark:bg-slate-900/70 dark:shadow-black/30",
+          className,
+        )}
+      >
+        <CardHeader className="space-y-5 border-b border-slate-200/70 bg-white/80 px-5 py-6 dark:border-slate-800/60 dark:bg-slate-900/60 sm:px-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg font-semibold">
@@ -444,7 +450,7 @@ export function AiChat({
           </div>
         </CardHeader>
 
-        <CardContent className="flex min-h-[460px] flex-1 flex-col overflow-hidden px-0 pb-0 pt-3 sm:pt-5">
+        <CardContent className="flex min-h-[420px] flex-1 flex-col overflow-hidden px-0 pb-0 pt-4 sm:pt-6">
           <div
             ref={scrollContainerRef}
             className="flex-1 space-y-5 overflow-y-auto px-4 pb-6 sm:px-6 sm:pb-8"
@@ -567,7 +573,7 @@ export function AiChat({
           </div>
         </CardContent>
 
-        <CardFooter className="border-t bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/70 sm:px-6">
+        <CardFooter className="border-t border-slate-200/70 bg-white/80 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-white/70 dark:border-slate-800/60 dark:bg-slate-900/70 sm:px-6">
           <form onSubmit={handleSubmit} className="flex w-full items-center gap-3">
             <Input
               value={input}

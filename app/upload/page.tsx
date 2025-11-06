@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,6 +18,8 @@ import { toast } from 'sonner';
 import { Upload, FileText, Package, ArrowLeft, ArrowRight, Check, Clock } from 'lucide-react';
 import Link from 'next/link';
 import UploadTopologyImage from '@/components/labs/UploadTopologyImage';
+import NetworkConfigUploader, { type NetworkConfigUploaderFilePayload } from '@/components/upload/NetworkConfigUploader';
+import { buildBackupMetadata, validateExtension } from '@/src/lib/allowed-backup-extensions';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_FILE_TYPES = [
@@ -82,6 +84,9 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedTopologyUrl, setUploadedTopologyUrl] = useState<string | null>(null);
   const [reviewTimeLeft, setReviewTimeLeft] = useState<number | null>(null);
+  const [configFileToken, setConfigFileToken] = useState<string | null>(null);
+  const [configResetSignal, setConfigResetSignal] = useState(0);
+  const getFileToken = useCallback((file: File) => `${file.name}-${file.lastModified}-${file.size}`, []);
 
   const form = useForm<LabFormData>({
     resolver: zodResolver(labFormSchema),
@@ -108,21 +113,57 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
         toast.error('Please drop an image file for topology');
       }
     } else {
-      form.setValue('additionalFiles', files);
+      form.setValue('additionalFiles', files, { shouldDirty: true, shouldValidate: true });
     }
   };
+
+  const removeConfigAttachment = useCallback(() => {
+    if (!configFileToken) return;
+    const files = form.getValues('additionalFiles') ?? [];
+    const filtered = files.filter(file => getFileToken(file) !== configFileToken);
+    form.setValue('additionalFiles', filtered, { shouldDirty: true, shouldValidate: true });
+  }, [configFileToken, form, getFileToken]);
+
+  const handleConfigReset = useCallback(() => {
+    removeConfigAttachment();
+    setConfigFileToken(null);
+  }, [removeConfigAttachment]);
+
+  const handleConfigRejected = useCallback(() => {
+    removeConfigAttachment();
+    setConfigFileToken(null);
+  }, [removeConfigAttachment]);
+
+  const handleConfigAccepted = useCallback(
+    (payload: NetworkConfigUploaderFilePayload) => {
+      removeConfigAttachment();
+      const files = form.getValues('additionalFiles') ?? [];
+      const sanitized = files.filter(file => getFileToken(file) !== getFileToken(payload.file));
+      form.setValue('additionalFiles', [...sanitized, payload.file], { shouldDirty: true, shouldValidate: true });
+      setConfigFileToken(getFileToken(payload.file));
+    },
+    [form, getFileToken, removeConfigAttachment],
+  );
 
   const validateFile = (file: File): boolean => {
     if (file.size > MAX_FILE_SIZE) {
       toast.error(`File ${file.name} exceeds 10MB limit`);
       return false;
     }
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+    const mimeAllowed = ALLOWED_FILE_TYPES.includes(file.type);
+    const extensionAllowed = validateExtension(file.name);
+    if (!mimeAllowed && !extensionAllowed) {
       toast.error(`File ${file.name} has unsupported type`);
       return false;
     }
     return true;
   };
+
+  const handleClearAdditionalFiles = useCallback(() => {
+    form.setValue('additionalFiles', [], { shouldDirty: true, shouldValidate: true });
+    setConfigFileToken(null);
+    setConfigResetSignal((prev) => prev + 1);
+  }, [form]);
 
   const onSubmit: SubmitHandler<LabFormData> = async (data) => {
     setIsSubmitting(true);
@@ -188,6 +229,10 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
           formData.append('file', file);
           formData.append('labId', labId);
           formData.append('description', `Additional file: ${file.name}`);
+          const metadata = buildBackupMetadata(file.name);
+          if (metadata.isValid) {
+            formData.append('metadata', JSON.stringify(metadata));
+          }
 
           await fetch('/api/upload', {
             method: 'POST',
@@ -199,6 +244,8 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
 
       setUploadProgress(100);
       setUploadedLab(labData.data);
+      setConfigFileToken(null);
+      setConfigResetSignal((prev) => prev + 1);
       setCurrentStep(successStep); // Success step
       toast.success('Lab uploaded successfully!');
     } catch (error) {
@@ -549,6 +596,21 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
       </div>
 
       <div className="space-y-3">
+        <label className="text-sm font-medium">Backup Configuration Validator (Optional)</label>
+        <NetworkConfigUploader
+          maxSizeBytes={MAX_FILE_SIZE}
+          onFileAccepted={handleConfigAccepted}
+          onFileRejected={handleConfigRejected}
+          onReset={handleConfigReset}
+          resetSignal={configResetSignal}
+          disabled={isSubmitting}
+        />
+        <p className="text-xs text-muted-foreground">
+          Validated files are automatically added to your additional resources list.
+        </p>
+      </div>
+
+      <div className="space-y-3">
         <label className="text-sm font-medium">Additional Files (Optional)</label>
         <div
           className="cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition-colors hover:border-gray-400"
@@ -562,7 +624,7 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
             className="hidden"
             onChange={(e) => {
               const files = Array.from(e.target.files || []);
-              form.setValue('additionalFiles', files);
+              form.setValue('additionalFiles', files, { shouldDirty: true, shouldValidate: true });
             }}
           />
           {form.watch('additionalFiles') && form.watch('additionalFiles')!.length > 0 ? (
@@ -583,7 +645,7 @@ export default function UploadPage({ variant = 'page' }: UploadPageProps = {}) {
                 variant="outline"
                 size="sm"
                 className="h-10 w-full sm:w-auto"
-                onClick={() => form.setValue('additionalFiles', [])}
+                onClick={handleClearAdditionalFiles}
               >
                 Clear All
               </Button>

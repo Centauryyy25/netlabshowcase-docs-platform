@@ -1,0 +1,48 @@
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="72" height="72" rx="16" fill="url(#paint0_linear_mik)" />
+  <path
+    d="M20 48C23 40 28 32 36 32C44 32 49 40 52 48"
+    stroke="white"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-opacity="0.85"
+  />
+  <path
+    d="M24 52C26.5 46 30.5 40 36 40C41.5 40 45.5 46 48 52"
+    stroke="white"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-opacity="0.75"
+  />
+  <circle
+    cx="36"
+    cy="38"
+    r="4"
+    fill="white"
+    fill-opacity="0.9"
+  />
+  <text
+    x="36"
+    y="60"
+    font-size="13"
+    font-weight="700"
+    text-anchor="middle"
+    fill="white"
+    font-family="Inter, Arial, sans-serif"
+  >
+    MIKROTIK
+  </text>
+  <defs>
+    <linearGradient
+      id="paint0_linear_mik"
+      x1="0"
+      y1="0"
+      x2="72"
+      y2="72"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#e11d48" />
+      <stop offset="1" stop-color="#fb923c" />
+    </linearGradient>
+  </defs>
+</svg>

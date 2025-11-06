@@ -1,0 +1,44 @@
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="72" height="72" rx="16" fill="url(#paint0_linear_net)" />
+  <circle cx="24" cy="36" r="6" fill="white" fill-opacity="0.85" />
+  <circle cx="48" cy="24" r="5" fill="white" fill-opacity="0.75" />
+  <circle cx="48" cy="48" r="5" fill="white" fill-opacity="0.75" />
+  <path
+    d="M24 36L48 24"
+    stroke="white"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-opacity="0.8"
+  />
+  <path
+    d="M24 36L48 48"
+    stroke="white"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-opacity="0.8"
+  />
+  <text
+    x="36"
+    y="62"
+    font-size="12"
+    font-weight="700"
+    text-anchor="middle"
+    fill="white"
+    font-family="Inter, Arial, sans-serif"
+  >
+    NETLAB
+  </text>
+  <defs>
+    <linearGradient
+      id="paint0_linear_net"
+      x1="0"
+      y1="0"
+      x2="72"
+      y2="72"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#4C1D95" />
+      <stop offset="1" stop-color="#0EA5E9" />
+    </linearGradient>
+  </defs>
+</svg>

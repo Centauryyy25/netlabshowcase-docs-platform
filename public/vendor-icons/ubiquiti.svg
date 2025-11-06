@@ -1,0 +1,42 @@
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="72" height="72" rx="16" fill="url(#paint0_linear_ubi)" />
+  <path
+    d="M20 48C20 35 28 26 36 26C44 26 52 35 52 48"
+    stroke="white"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-opacity="0.85"
+  />
+  <path
+    d="M27 48C27 38 31 32 36 32C41 32 45 38 45 48"
+    stroke="white"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-opacity="0.75"
+  />
+  <circle cx="36" cy="30" r="5" fill="white" fill-opacity="0.9" />
+  <text
+    x="36"
+    y="60"
+    font-size="13"
+    font-weight="700"
+    text-anchor="middle"
+    fill="white"
+    font-family="Inter, Arial, sans-serif"
+  >
+    UBIQUITI
+  </text>
+  <defs>
+    <linearGradient
+      id="paint0_linear_ubi"
+      x1="0"
+      y1="0"
+      x2="72"
+      y2="72"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#3B82F6" />
+      <stop offset="1" stop-color="#2DD4BF" />
+    </linearGradient>
+  </defs>
+</svg>

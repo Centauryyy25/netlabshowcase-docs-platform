@@ -16,10 +16,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import {
   ArrowLeft,
   Download,
+  Upload,
   Calendar,
   Clock,
   Eye,
@@ -36,9 +58,12 @@ import {
   Building,
   BookOpen,
   Pencil,
-  X
+  X,
+  Loader2,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import NetworkConfigUploader, { type NetworkConfigUploaderFilePayload } from '@/components/upload/NetworkConfigUploader';
 
 interface LabFile {
   id: string;
@@ -139,6 +164,8 @@ const formatDate = (dateString: string) => {
   });
 };
 
+const MAX_RESOURCE_FILE_SIZE = 10 * 1024 * 1024;
+
 export default function LabDetailContent() {
   const params = useParams();
   const router = useRouter();
@@ -152,9 +179,18 @@ export default function LabDetailContent() {
   const { data: session } = useSession();
   const isAuthor = Boolean(session?.user?.id && labData?.lab?.author?.id === session.user.id);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [notesDraft, setNotesDraft] = useState<string>('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [uploadingResource, setUploadingResource] = useState(false);
+  const [resourceFile, setResourceFile] = useState<File | null>(null);
+  const [resourceMetadata, setResourceMetadata] = useState<NetworkConfigUploaderFilePayload['metadata'] | null>(null);
+  const [resourceDescription, setResourceDescription] = useState('');
+  const [resourceError, setResourceError] = useState<string | null>(null);
+  const [uploaderResetSignal, setUploaderResetSignal] = useState(0);
 
   const deleteStorageObject = async (path: string | null) => {
     if (!path) return;
@@ -281,6 +317,133 @@ export default function LabDetailContent() {
     }
   };
 
+  const resetResourceForm = useCallback(() => {
+    setResourceFile(null);
+    setResourceMetadata(null);
+    setResourceDescription('');
+    setResourceError(null);
+    setUploaderResetSignal((prev) => prev + 1);
+  }, []);
+
+  const handleUploaderFileAccepted = useCallback((payload: NetworkConfigUploaderFilePayload) => {
+    setResourceFile(payload.file);
+    setResourceMetadata(payload.metadata);
+    setResourceError(null);
+  }, []);
+
+  const handleUploaderRejected = useCallback((message: string) => {
+    setResourceFile(null);
+    setResourceMetadata(null);
+    setResourceError(message);
+  }, []);
+
+  const handleUploaderReset = useCallback(() => {
+    setResourceFile(null);
+    setResourceMetadata(null);
+    setResourceError(null);
+  }, []);
+
+  const handleResourceDescriptionChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setResourceDescription(event.target.value);
+  }, []);
+
+  const handleUploadDialogChange = useCallback(
+    (open: boolean) => {
+      if (uploadingResource) return;
+      setIsUploadDialogOpen(open);
+      if (!open) {
+        resetResourceForm();
+      }
+    },
+    [resetResourceForm, uploadingResource]
+  );
+
+  const handleOpenResourceDialog = useCallback(() => {
+    if (!isAuthor) {
+      toast.error('Only the author can upload files.');
+      return;
+    }
+    resetResourceForm();
+    setIsUploadDialogOpen(true);
+  }, [isAuthor, resetResourceForm]);
+
+  const handleUploadResource = useCallback(async () => {
+    if (!isAuthor) {
+      toast.error('Only the author can upload files.');
+      return;
+    }
+
+    if (!resourceFile) {
+      const message = 'Please choose a supported backup file before uploading.';
+      setResourceError(message);
+      toast.error(message);
+      return;
+    }
+
+    if (resourceFile.size > MAX_RESOURCE_FILE_SIZE) {
+      const message = 'File size exceeds the 10MB limit.';
+      setResourceError(message);
+      toast.error(message);
+      return;
+    }
+
+    setResourceError(null);
+    setUploadingResource(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', resourceFile);
+      formData.append('labId', labId);
+      if (resourceDescription.trim()) {
+        formData.append('description', resourceDescription.trim());
+      }
+      if (resourceMetadata) {
+        formData.append('metadata', JSON.stringify(resourceMetadata));
+      }
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      const payload = (await response.json().catch(() => null)) as { file?: LabFile; error?: string } | null;
+
+      if (!response.ok || !payload?.file) {
+        throw new Error(payload?.error || 'Failed to upload file.');
+      }
+
+      const uploadedFile = payload.file!;
+
+      setLabData(prev =>
+        prev
+          ? {
+              ...prev,
+              files: [uploadedFile, ...prev.files],
+            }
+          : prev,
+      );
+
+      toast.success('File uploaded successfully.');
+      setIsUploadDialogOpen(false);
+      resetResourceForm();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to upload file.';
+      setResourceError(message);
+      toast.error(message);
+    } finally {
+      setUploadingResource(false);
+    }
+  }, [
+    isAuthor,
+    labId,
+    resourceDescription,
+    resourceFile,
+    resourceMetadata,
+    resetResourceForm,
+    setLabData,
+  ]);
+
   const fetchRelatedLabs = useCallback(
     async (category: string) => {
       try {
@@ -390,6 +553,53 @@ export default function LabDetailContent() {
     }
   };
 
+  const handleDeleteLab = useCallback(
+    async (event?: React.MouseEvent<HTMLButtonElement>) => {
+      event?.preventDefault();
+
+      if (!isAuthor) {
+        toast.error('Only the author can delete this lab.');
+        return;
+      }
+
+      if (!labData?.lab) {
+        toast.error('Lab details are not available.');
+        return;
+      }
+
+      setIsDeleting(true);
+      try {
+        const response = await fetch(`/api/labs/${labId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          const message =
+            typeof payload?.error === 'string' ? payload.error : 'Failed to delete lab.';
+          throw new Error(message);
+        }
+
+        const topologyPath = extractStoragePath(labData.lab.topologyImageUrl ?? null);
+        if (topologyPath) {
+          await deleteStorageObject(topologyPath);
+        }
+
+        toast.success('Lab deleted successfully.');
+        setDeleteDialogOpen(false);
+        router.push('/labs');
+      } catch (error) {
+        console.error('Error deleting lab:', error);
+        const message = error instanceof Error ? error.message : 'Failed to delete lab.';
+        toast.error(message);
+      } finally {
+        setIsDeleting(false);
+      }
+    },
+    [isAuthor, labData?.lab, labId, router]
+  );
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -416,7 +626,7 @@ export default function LabDetailContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] text-gray-900 dark:bg-[#050f24] dark:text-slate-100">
+      <div className="min-h-screen bg-[#F9FAFB] text-gray-900 dark:bg-[#020618] dark:text-slate-100">
         <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
           <div className="space-y-4 animate-pulse">
             <div className="h-8 w-64 rounded bg-slate-800/60"></div>
@@ -454,13 +664,51 @@ export default function LabDetailContent() {
   }
 
   const { lab, files } = labData;
+  const topologyImageUrl = lab.topologyImageUrl?.trim()
+    ? lab.topologyImageUrl.trim()
+    : null;
+  const configFiles = files.filter(
+    (file) => file.fileType.includes('config') || file.fileType.includes('text')
+  );
+  const renderFileRow = (file: LabFile) => {
+    const FileIcon = getFileIcon(file.fileType);
+    return (
+      <div
+        key={file.id}
+        className="flex flex-col gap-4 rounded-xl border border-slate-200/70 bg-white/85 p-4 shadow-sm transition hover:border-slate-300 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800/60 dark:bg-slate-900/50 dark:hover:border-slate-700"
+      >
+        <div className="flex items-center gap-3">
+          <FileIcon className="h-5 w-5 text-sky-500 dark:text-sky-300" />
+          <div>
+            <p className="font-medium text-gray-900 dark:text-white">{file.fileName}</p>
+            <p className="text-sm text-gray-600 dark:text-slate-300">
+              {formatFileSize(file.fileSize)} | {file.fileType}
+            </p>
+            {file.description && (
+              <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">{file.description}</p>
+            )}
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 sm:w-auto dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800"
+          onClick={() => handleDownload(file)}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Download
+        </Button>
+      </div>
+    );
+  };
   const CategoryIcon = categoryIcons[lab.category as keyof typeof categoryIcons];
   const lastUpdatedLabel = lab.updatedAt
     ? new Date(lab.updatedAt).toLocaleString()
     : 'Just now';
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] text-gray-900 dark:bg-[#050f24] dark:text-slate-100">
+    <>
+      <div className="min-h-screen bg-[#F9FAFB] text-gray-900 dark:bg-[#050f24]/50 dark:text-slate-100">
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       {/* Breadcrumb Navigation */}
       <Breadcrumb>
@@ -540,7 +788,7 @@ export default function LabDetailContent() {
             </CardHeader>
             <CardContent className="px-4 py-4 sm:px-6 sm:py-6">
               <div className="relative aspect-video overflow-hidden rounded-xl border border-slate-200/70 bg-slate-100 dark:border-slate-800/60 dark:bg-slate-900/60">
-                {lab.topologyImageUrl && !imageError ? (
+                {topologyImageUrl && !imageError ? (
                   <>
                     {imageLoading && (
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -549,7 +797,7 @@ export default function LabDetailContent() {
                     )}
                     <ImageZoom className="h-full w-full">
                       <Image
-                        src={lab.topologyImageUrl}
+                        src={topologyImageUrl}
                         alt={`${lab.title} topology diagram`}
                         fill
                         className="object-contain"
@@ -650,89 +898,82 @@ export default function LabDetailContent() {
           </Card>
 
           {/* Configuration Files */}
-          {files.length > 0 && (
+          {(files.length > 0 || isAuthor) && (
             <Card className={surfaceCardStyles}>
               <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
-                <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-                  <FileText className="h-5 w-5 text-sky-500 dark:text-sky-300" />
-                  Configuration Files & Resources
-                </CardTitle>
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                    <FileText className="h-5 w-5 text-sky-500 dark:text-sky-300" />
+                    Configuration Files & Resources
+                  </CardTitle>
+                  {isAuthor && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-10 border-slate-200/80 text-slate-600 hover:bg-slate-100 dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800"
+                      onClick={handleOpenResourceDialog}
+                      disabled={uploadingResource}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload File
+                    </Button>
+                  )}
+                </div>
                 <CardDescription className="text-sm text-gray-600 dark:text-slate-300">
-                  Download configuration files, packet traces, and additional resources
+                  Download configuration files, packet traces, dan resource tambahan lainnya
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-4 py-4 sm:px-6 sm:py-6">
                 <Tabs defaultValue="all" className="w-full">
                   <TabsList className="grid w-full grid-cols-2 gap-2 rounded-lg bg-slate-100/80 p-1 dark:bg-slate-900/60 sm:gap-3">
-                    <TabsTrigger value="all" className="data-[state=active]:bg-white/95 data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-800/70 dark:data-[state=active]:text-slate-100">
+                    <TabsTrigger
+                      value="all"
+                      className="data-[state=active]:bg-white/95 data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-800/70 dark:data-[state=active]:text-slate-100"
+                    >
                       All Files
                     </TabsTrigger>
-                    <TabsTrigger value="configs" className="data-[state=active]:bg-white/95 data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-800/70 dark:data-[state=active]:text-slate-100">
+                    <TabsTrigger
+                      value="configs"
+                      className="data-[state=active]:bg-white/95 data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-800/70 dark:data-[state=active]:text-slate-100"
+                    >
                       Configurations
                     </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="all" className="space-y-3">
-                    {files.map((file) => {
-                      const FileIcon = getFileIcon(file.fileType);
-                      return (
-                        <div key={file.id} className="flex flex-col gap-4 rounded-xl border border-slate-200/70 bg-white/85 p-4 shadow-sm transition hover:border-slate-300 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800/60 dark:bg-slate-900/50 dark:hover:border-slate-700">
-                          <div className="flex items-center gap-3">
-                            <FileIcon className="h-5 w-5 text-sky-500 dark:text-sky-300" />
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">{file.fileName}</p>
-                              <p className="text-sm text-gray-600 dark:text-slate-300">
-                                {formatFileSize(file.fileSize)} | {file.fileType}
-                              </p>
-                              {file.description && (
-                                <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
-                                  {file.description}
-                                </p>
-                              )}
-                            </div>
+                    {files.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-slate-300/70 bg-white/70 p-5 text-sm text-gray-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+                        {isAuthor
+                          ? 'Belum ada resource yang diunggah. Tambahkan konfigurasi, capture, atau aset pendukung lainnya.'
+                          : 'Tidak ada resource tambahan untuk lab ini.'}
+                        {isAuthor && (
+                          <div className="mt-4">
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={handleOpenResourceDialog}
+                              disabled={uploadingResource}
+                            >
+                              <Upload className="mr-2 h-4 w-4" />
+                              Upload File
+                            </Button>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 sm:w-auto dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800"
-                            onClick={() => handleDownload(file)}
-                          >
-                            <Download className="mr-2 h-4 w-4" />
-                            Download
-                          </Button>
-                        </div>
-                      );
-                    })}
+                        )}
+                      </div>
+                    ) : (
+                      files.map((file) => renderFileRow(file))
+                    )}
                   </TabsContent>
 
                   <TabsContent value="configs" className="space-y-3">
-                    {files
-                      .filter(file => file.fileType.includes('config') || file.fileType.includes('text'))
-                      .map((file) => {
-                        const FileIcon = getFileIcon(file.fileType);
-                        return (
-                          <div key={file.id} className="flex flex-col gap-4 rounded-xl border border-slate-200/70 bg-white/85 p-4 shadow-sm transition hover:border-slate-300 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800/60 dark:bg-slate-900/50 dark:hover:border-slate-700">
-                            <div className="flex items-center gap-3">
-                              <FileIcon className="h-5 w-5 text-sky-500 dark:text-sky-300" />
-                              <div>
-                                <p className="font-medium text-gray-900 dark:text-white">{file.fileName}</p>
-                                <p className="text-sm text-gray-600 dark:text-slate-300">
-                                  {formatFileSize(file.fileSize)} | {file.fileType}
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 sm:w-auto dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800"
-                              onClick={() => handleDownload(file)}
-                            >
-                              <Download className="mr-2 h-4 w-4" />
-                              Download
-                            </Button>
-                          </div>
-                        );
-                      })}
+                    {configFiles.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-slate-300/70 bg-white/70 p-5 text-sm text-gray-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+                        Belum ada file konfigurasi khusus.
+                      </div>
+                    ) : (
+                      configFiles.map((file) => renderFileRow(file))
+                    )}
                   </TabsContent>
                 </Tabs>
               </CardContent>
@@ -824,12 +1065,57 @@ export default function LabDetailContent() {
                 AI Assistant
               </Button>
 
-              <Button className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800" variant="outline" asChild>
-                <Link href={`/upload?duplicate=${lab.id}`}>
-                  <Package className="mr-2 h-4 w-4" />
-                  Duplicate Lab
-                </Link>
-              </Button>
+              {isAuthor && (
+                <Button
+                  className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800"
+                  variant="outline"
+                  onClick={handleOpenResourceDialog}
+                  disabled={uploadingResource}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload Resource
+                </Button>
+              )}
+
+              {isAuthor && (
+                <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => !isDeleting && setDeleteDialogOpen(open)}>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800"
+                      variant="outline"
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Lab
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-white dark:bg-slate-950">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this lab?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action permanently removes the lab and its resources. You cannot undo this operation.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteLab}
+                        disabled={isDeleting}
+                        className="bg-rose-600 text-white hover:bg-rose-500 focus:ring-rose-500 dark:bg-rose-500 dark:hover:bg-rose-400"
+                      >
+                        {isDeleting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Deleting...
+                          </>
+                        ) : (
+                          'Delete Lab'
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
 
               <Button
                 className="h-11 w-full border-slate-200/80 text-slate-600 hover:bg-slate-100 dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -879,7 +1165,80 @@ export default function LabDetailContent() {
         </div>
       )}
       </div>
-    </div>
+      </div>
+
+      <Dialog open={isUploadDialogOpen} onOpenChange={handleUploadDialogChange}>
+        <DialogContent className="bg-white dark:bg-slate-950">
+          <DialogHeader>
+            <DialogTitle>Upload resource file</DialogTitle>
+            <DialogDescription>
+              Unggah konfigurasi, capture, atau aset pendukung lainnya (maksimal 10MB).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Network backup file</Label>
+              <NetworkConfigUploader
+                maxSizeBytes={MAX_RESOURCE_FILE_SIZE}
+                resetSignal={uploaderResetSignal}
+                onFileAccepted={handleUploaderFileAccepted}
+                onFileRejected={handleUploaderRejected}
+                onReset={handleUploaderReset}
+                disabled={uploadingResource}
+              />
+              <p className="text-xs text-gray-500 dark:text-slate-400">
+                Supports 25+ vendor formats (.cfg, .conf, .rsc, .bin, .tgz, .zip, etc.) up to 10MB.
+              </p>
+              {resourceFile && resourceMetadata && (
+                <p className="text-sm text-gray-600 dark:text-slate-300">
+                  Ready to upload: {resourceFile.name} - {resourceMetadata.vendor} ({resourceMetadata.fileType})
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lab-resource-description">Description (optional)</Label>
+              <Textarea
+                id="lab-resource-description"
+                placeholder="Contoh: Full running-config router edge"
+                value={resourceDescription}
+                onChange={handleResourceDescriptionChange}
+                disabled={uploadingResource}
+                rows={4}
+              />
+            </div>
+
+            {resourceError && (
+              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-100">
+                {resourceError}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => handleUploadDialogChange(false)}
+              disabled={uploadingResource}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleUploadResource} disabled={uploadingResource}>
+              {uploadingResource ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                'Upload File'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

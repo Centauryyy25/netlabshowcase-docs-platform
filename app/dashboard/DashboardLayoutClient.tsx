@@ -1,20 +1,16 @@
 "use client"
 
 import type { CSSProperties, ReactNode } from "react"
-import { Suspense, lazy, memo } from "react"
+import { memo } from "react"
 
 import DashboardViewRenderer from "@/components/dashboard/DashboardViewRenderer"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { QuickUploadModal } from "@/components/labs/QuickUploadModal"
 import { GlobalHotkeys } from "@/components/keyboard/GlobalHotkeys"
+import AppSidebar from "@/components/app-sidebar"
 
 import { DashboardViewProvider } from "./DashboardViewContext"
-
-const LazyAppSidebar = lazy(() => import("@/components/app-sidebar"))
 
 type DashboardLayoutClientProps = {
   children: ReactNode
@@ -35,15 +31,7 @@ function DashboardLayoutClientComponent({
       }
     >
       <DashboardViewProvider syncWithURL={false}>
-        <Suspense
-          fallback={
-            <div className="bg-muted/20 p-4" style={{ width: "calc(var(--spacing) * 72)" }}>
-              Loading sidebar...
-            </div>
-          }
-        >
-          <LazyAppSidebar variant="inset" />
-        </Suspense>
+        <AppSidebar variant="inset" />
         <SidebarInset>
           <SiteHeader />
           <div className="flex flex-1 flex-col">
