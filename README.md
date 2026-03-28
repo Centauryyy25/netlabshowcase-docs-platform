@@ -1,329 +1,241 @@
-# Codeguide Starter Fullstack
+<p align="center">
+  <img src="public/_next/static/media/EtherDocs-Logo.693b3dd5.png" alt="Ether Docs" width="80" />
+</p>
 
-A modern web application starter template built with Next.js 15, featuring authentication, database integration, and dark mode support.
+<h1 align="center">Ether Docs</h1>
+
+<p align="center">
+  <b>Open-source network lab documentation & showcase platform with AI-assisted config analysis</b><br/>
+  <sub>Document, share, and explore verified networking lab topologies across Cisco, MikroTik, Fortinet, and Ruijie.</sub>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js" alt="Next.js"/>
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"/>
+  <img src="https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=for-the-badge&logo=drizzle&logoColor=black" alt="Drizzle"/>
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
+  <img src="https://img.shields.io/badge/Tailwind-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind"/>
+</p>
+
+<p align="center">
+  <a href="https://ether-docs.vercel.app"><b>🔗 Live Demo</b></a> · <a href="https://discord.gg/netlabshowcase"><b>💬 Discord Community</b></a> · <a href="#getting-started">Quick Start</a>
+</p>
+
+<!--
+🖼️ SCREENSHOTS — Uncomment after adding
+
+<p align="center">
+  <img src="docs/screenshots/landing.png" width="70%" alt="Landing Page" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/lab-detail.png" width="45%" alt="Lab Detail"/>
+  &nbsp;
+  <img src="docs/screenshots/ai-assist.png" width="45%" alt="AI Assistant"/>
+</p>
+-->
+
+---
+
+## About
+
+Ether Docs is a community-driven platform built for network engineers and students to document, share, and explore hands-on networking lab configurations. It supports multi-vendor environments and includes AI-powered tools for automated documentation and config analysis.
+
+**Why this exists:** Network lab documentation is typically scattered across PDFs, personal notes, and unstructured wikis. Ether Docs centralizes this into a searchable, verified, and interactive platform — making it easier to learn, teach, and collaborate on networking topics.
+
+## Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Lab Showcase** | Browse 48+ verified lab topologies covering routing, switching, security, and automation |
+| **Multi-Vendor Support** | Labs spanning Cisco, MikroTik, Fortinet, and Ruijie in a single platform |
+| **AI Lab Assistant** | Auto-generate documentation, analyze configurations, and get optimization recommendations |
+| **Interactive Documentation** | 350+ searchable technical docs with topology diagrams |
+| **Authentication** | User accounts via Better Auth (email/password) with role-based access |
+| **Dark Mode** | System-aware theme with manual toggle |
+| **Docker Support** | Full containerization with multi-stage builds for production deployment |
+| **Community** | Integrated Discord community (355+ members) for collaboration and support |
+
+## Lab Categories
+
+| Category | Topics |
+|----------|--------|
+| **Routing** | BGP, RIP, OSPF, Segment Routing, DHCP |
+| **Switching** | VLAN, Trunking, Spanning Tree Protocol |
+| **Security** | Zero Trust, Firewall HA, Router Hardening |
+| **Data Center** | EVPN Fabric, Hybrid Cloud Topologies |
+| **Automation** | Campus Automation, Observability Pipelines |
+| **Edge** | LTE Failover, SASE |
+
+## Architecture
+
+```
+Client (Browser)
+    │
+    ▼
+┌──────────────────────────────────────────────┐
+│  Next.js 15 (App Router + Turbopack)         │
+│  ┌──────────┐  ┌──────────┐  ┌────────────┐ │
+│  │  Pages   │  │  API      │  │ Middleware  │ │
+│  │  (RSC)   │  │  Routes   │  │ (Auth)     │ │
+│  └────┬─────┘  └────┬─────┘  └────────────┘ │
+│       │              │                        │
+│  ┌────▼──────────────▼──────────┐             │
+│  │     Shared Lib Layer         │             │
+│  │  (Drizzle ORM, Better Auth,  │             │
+│  │   AI integration, utils)     │             │
+│  └──────────────┬───────────────┘             │
+└─────────────────┼─────────────────────────────┘
+                  │
+      ┌───────────▼──────────┐
+      │  PostgreSQL (Docker)  │
+      └──────────────────────┘
+```
 
 ## Tech Stack
 
-- **Framework:** [Next.js 15](https://nextjs.org/) (App Router with Turbopack)
-- **Language:** TypeScript
-- **Authentication:** [Better Auth](https://better-auth.com/)
-- **Database:** [Drizzle ORM](https://orm.drizzle.team/) with PostgreSQL
-- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
-- **UI Components:** [shadcn/ui](https://ui.shadcn.com/) (New York style)
-- **Theme System:** [next-themes](https://github.com/pacocoursey/next-themes)
-- **Icons:** [Lucide React](https://lucide.dev/)
-
-## Prerequisites
-
-Before you begin, ensure you have the following:
-- Node.js 18+ installed
-- Docker and Docker Compose (for database setup)
-- Generated project documents from [CodeGuide](https://codeguide.dev/) for best development experience
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 15 (App Router, RSC, Turbopack) |
+| Language | TypeScript |
+| Database | PostgreSQL |
+| ORM | Drizzle ORM |
+| Auth | Better Auth (email/password) |
+| UI | Tailwind CSS v4 + shadcn/ui (40+ components) |
+| Theme | next-themes (dark mode) |
+| Icons | Lucide React |
+| Containerization | Docker + Docker Compose |
+| Deployment | Vercel / Docker (VPS) |
 
 ## Getting Started
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd codeguide-starter-fullstack
-   ```
+### Prerequisites
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   # or
-   yarn install
-   # or
-   pnpm install
-   ```
+- Node.js 18+
+- Docker & Docker Compose (for database)
 
-3. **Environment Variables Setup**
-   - Copy the `.env.example` file to `.env`:
-     ```bash
-     cp .env.example .env
-     ```
-   - The default values work with Docker setup, modify as needed
+### Installation
 
-4. **Start the development server**
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   # or
-   pnpm dev
-   ```
+```bash
+git clone https://github.com/Centauryyy25/netlabshowcase-docs-platform.git
+cd netlabshowcase-docs-platform
+npm install
+```
 
-5. **Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.**
+### Environment Setup
 
-## Configuration
-
-### Option 1: Docker Setup (Recommended)
-1. **Start PostgreSQL with Docker:**
-   ```bash
-   npm run db:up
-   ```
-   This starts PostgreSQL in a Docker container with default credentials.
-
-2. **Push database schema:**
-   ```bash
-   npm run db:push
-   ```
-
-### Option 2: Local Database Setup
-1. Create a PostgreSQL database locally
-2. Update your environment variables in `.env`:
-   ```env
-   DATABASE_URL=postgresql://username:password@localhost:5432/database_name
-   POSTGRES_DB=your_database_name
-   POSTGRES_USER=your_username
-   POSTGRES_PASSWORD=your_password
-   ```
-3. Run database migrations:
-   ```bash
-   npm run db:push
-   ```
-
-## Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
+```bash
+cp .env.example .env
+```
 
 ```env
-# Database Configuration (defaults work with Docker)
+# Database
 DATABASE_URL=postgresql://postgres:postgres@localhost:5433/postgres
 POSTGRES_DB=postgres
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 
-# Authentication
-BETTER_AUTH_SECRET=your_secret_key_here
+# Auth
+BETTER_AUTH_SECRET=your_secret_key
 BETTER_AUTH_URL=http://localhost:3000
 NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
 ```
 
-## Features
-
-- 🔐 Authentication with Better Auth (email/password)
-- 🗄️ PostgreSQL Database with Drizzle ORM
-- 🎨 40+ shadcn/ui components (New York style)
-- 🌙 Dark mode with system preference detection
-- 🚀 App Router with Server Components and Turbopack
-- 📱 Responsive design with TailwindCSS v4
-- 🎯 Type-safe database operations
-- 🔒 Modern authentication patterns
-- 🐳 Full Docker support with multi-stage builds
-- 🚀 Production-ready deployment configuration
-
-## Project Structure
-
-```
-codeguide-starter-fullstack/
-├── app/                        # Next.js app router pages
-│   ├── globals.css            # Global styles with dark mode
-│   ├── layout.tsx             # Root layout with providers
-│   └── page.tsx               # Main page
-├── components/                # React components
-│   └── ui/                    # shadcn/ui components (40+)
-├── db/                        # Database configuration
-│   ├── index.ts              # Database connection
-│   └── schema/               # Database schemas
-├── docker/                    # Docker configuration
-│   └── postgres/             # PostgreSQL initialization
-├── hooks/                     # Custom React hooks
-├── lib/                       # Utility functions
-│   ├── auth.ts               # Better Auth configuration
-│   └── utils.ts              # General utilities
-├── auth-schema.ts            # Authentication schema
-├── docker-compose.yml        # Docker services configuration
-├── Dockerfile                # Application container definition
-├── drizzle.config.ts         # Drizzle configuration
-└── components.json           # shadcn/ui configuration
-```
-
-## Database Integration
-
-This starter includes modern database integration:
-
-- **Drizzle ORM** for type-safe database operations
-- **PostgreSQL** as the database provider
-- **Better Auth** integration with Drizzle adapter
-- **Database migrations** with Drizzle Kit
-
-## Development Commands
-
-### Application
-- `npm run dev` - Start development server with Turbopack
-- `npm run build` - Build for production with Turbopack
-- `npm start` - Start production server
-- `npm run lint` - Run ESLint
-
 ### Database
-- `npm run db:up` - Start PostgreSQL in Docker
-- `npm run db:down` - Stop PostgreSQL container
-- `npm run db:dev` - Start development PostgreSQL (port 5433)
-- `npm run db:dev-down` - Stop development PostgreSQL
-- `npm run db:push` - Push schema changes to database
-- `npm run db:generate` - Generate Drizzle migration files
-- `npm run db:studio` - Open Drizzle Studio (database GUI)
-- `npm run db:reset` - Reset database (drop all tables and recreate)
 
-### Styling with shadcn/ui
-- Pre-configured with 40+ shadcn/ui components in New York style
-- Components are fully customizable and use CSS variables for theming
-- Automatic dark mode support with next-themes integration
-- Add new components: `npx shadcn@latest add [component-name]`
-
-### Docker
-- `npm run docker:build` - Build application Docker image
-- `npm run docker:up` - Start full application stack (app + database)
-- `npm run docker:down` - Stop all containers
-- `npm run docker:logs` - View container logs
-- `npm run docker:clean` - Stop containers and clean up volumes
-
-## Docker Development
-
-### Quick Start with Docker
 ```bash
-# Start the entire stack (recommended for new users)
+# Start PostgreSQL via Docker
+npm run db:up
+
+# Push schema
+npm run db:push
+
+# Open Drizzle Studio (database GUI)
+npm run db:studio
+```
+
+### Run
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+### Full Docker Stack (Alternative)
+
+```bash
+# Start app + database together
 npm run docker:up
 
 # View logs
 npm run docker:logs
-
-# Stop everything
-npm run docker:down
 ```
 
-### Development Workflow
-```bash
-# Option 1: Database only (develop app locally)
-npm run db:up          # Start PostgreSQL
-npm run dev            # Start Next.js development server
+## Project Structure
 
-# Option 2: Full Docker stack
-npm run docker:up      # Start both app and database
 ```
-
-### Docker Services
-
-The `docker-compose.yml` includes:
-
-- **postgres**: Main PostgreSQL database (port 5432)
-- **postgres-dev**: Development database (port 5433) - use `--profile dev`
-- **app**: Next.js application container (port 3000)
-
-### Docker Profiles
-
-```bash
-# Start development database on port 5433
-docker-compose --profile dev up postgres-dev -d
-
-# Or use the npm script
-npm run db:dev
+netlabshowcase-docs-platform/
+├── app/                # Next.js App Router (pages, layouts, API routes)
+├── components/         # UI components (40+ shadcn/ui)
+├── context/            # React context providers
+├── db/
+│   ├── index.ts        # Database connection
+│   └── schema/         # Drizzle schemas
+├── docker/
+│   └── postgres/       # PostgreSQL init scripts
+├── drizzle/            # Migrations
+├── hooks/              # Custom React hooks
+├── lib/                # Auth config, utilities
+├── settings/           # App settings/config
+├── types/              # TypeScript definitions
+├── utils/              # Helper functions
+├── Dockerfile          # Multi-stage production build
+└── docker-compose.yaml # Service orchestration
 ```
 
 ## Deployment
 
-### Production Deployment
-
-#### Option 1: Docker Compose (VPS/Server)
-
-1. **Clone and setup on your server:**
-   ```bash
-   git clone <your-repo>
-   cd codeguide-starter-fullstack
-   cp .env.example .env
-   ```
-
-2. **Configure environment variables:**
-   ```bash
-   # Edit .env with production values
-   DATABASE_URL=postgresql://postgres:your_secure_password@postgres:5432/postgres
-   POSTGRES_DB=postgres
-   POSTGRES_USER=postgres
-   POSTGRES_PASSWORD=your_secure_password
-   BETTER_AUTH_SECRET=your-very-secure-secret-key
-   BETTER_AUTH_URL=https://yourdomain.com
-   NEXT_PUBLIC_BETTER_AUTH_URL=https://yourdomain.com
-   ```
-
-3. **Deploy:**
-   ```bash
-   npm run docker:up
-   ```
-
-#### Option 2: Container Registry (AWS/GCP/Azure)
-
-1. **Build and push image:**
-   ```bash
-   # Build the image
-   docker build -t your-registry/codeguide-starter-fullstack:latest .
-   
-   # Push to registry
-   docker push your-registry/codeguide-starter-fullstack:latest
-   ```
-
-2. **Deploy using your cloud provider's container service**
-
-#### Option 3: Vercel + External Database
-
-1. **Deploy to Vercel:**
-   ```bash
-   npm i -g vercel
-   vercel
-   ```
-
-2. **Add environment variables in Vercel dashboard:**
-   - `DATABASE_URL`: Your managed PostgreSQL connection string
-   - `BETTER_AUTH_SECRET`: Generate a secure secret
-   - `BETTER_AUTH_URL`: Your Vercel deployment URL
-
-3. **Setup database:**
-   ```bash
-   # Push schema to your managed database
-   npm run db:push
-   ```
-
-### Environment Variables for Production
-
-```env
-# Required for production
-DATABASE_URL=postgresql://user:password@host:port/database
-BETTER_AUTH_SECRET=generate-a-very-secure-32-character-key
-BETTER_AUTH_URL=https://yourdomain.com
-
-# Optional optimizations
-NODE_ENV=production
+**Vercel + Managed DB (recommended):**
+```bash
+vercel
+# Add DATABASE_URL and auth env vars in Vercel dashboard
+npm run db:push
 ```
 
-### Production Considerations
-
-- **Database**: Use managed PostgreSQL (AWS RDS, Google Cloud SQL, etc.)
-- **Security**: Generate strong secrets, use HTTPS
-- **Performance**: Enable Next.js output: 'standalone' for smaller containers
-- **Monitoring**: Add logging and health checks
-- **Backup**: Regular database backups
-- **SSL**: Terminate SSL at load balancer or reverse proxy
-
-### Health Checks
-
-The application includes basic health checks. You can extend them:
-
-```dockerfile
-# In Dockerfile, add health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
+**Docker on VPS:**
+```bash
+npm run docker:up
 ```
 
-## AI Coding Agent Integration
+See the full deployment guide for production considerations (managed PostgreSQL, SSL, health checks, backups).
 
-This starter is optimized for AI coding agents:
+## Roadmap
 
-- **Clear file structure** and naming conventions
-- **TypeScript integration** with proper type definitions
-- **Modern authentication** patterns
-- **Database schema** examples
+- [ ] Topology diagram editor (drag-and-drop)
+- [ ] Lab version history and diff view
+- [ ] Export labs to PDF / Markdown
+- [ ] Community voting and lab rankings
+- [ ] Integration with GNS3 / EVE-NG lab files
+- [ ] API for third-party integrations
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-# codeguide-starter-fullstack
+```bash
+git checkout -b feature/your-feature
+git commit -m "feat: add your feature"
+git push origin feature/your-feature
+```
+
+Open a Pull Request with a clear description. Join the [Discord](https://discord.gg/netlabshowcase) to discuss ideas.
+
+## License
+
+All rights reserved.
+
+---
+
+<p align="center">
+  Built by <a href="https://www.linkedin.com/in/ilham-ahsan-saputra/"><b>Ilham Ahsan Saputra</b></a><br/>
+  <sub>Computer Science Student · Junior Network Engineer</sub>
+</p>
